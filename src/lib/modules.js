@@ -13,7 +13,7 @@ export function calendarView(ctx) {
   if (tomorrow) dayStart.setDate(dayStart.getDate() + 1);
   const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
   const items = people.map((p) => ({
-    name: p.name, color: p.color,
+    name: p.name,
     events: p.events.filter((e) =>
       new Date(e.start) >= dayStart && new Date(e.start) < dayEnd && new Date(e.end) > now),
   }));
@@ -28,7 +28,7 @@ export const REGISTRY = {
   hourly:   { minHeight: 185, priority: 60,  flex: false, active: (c) => !!c.weather },
   reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
-  calendar: { minHeight: 170, priority: 70,  flex: false, active: (c) => calendarView(c).items.length > 0 },
+  calendar: { minHeight: 215, priority: 70,  flex: false, active: (c) => calendarView(c).items.length > 0 },
 };
 
 const GAP = 36;
