@@ -2,7 +2,11 @@
 function poll(url, ms) {
   const s = $state({ v: null });
   const go = async () => {
-    try { s.v = await (await fetch(url)).json(); } catch { /* keep last value */ }
+    try {
+      const res = await fetch(url);
+      if (res.ok) s.v = await res.json();
+    } catch { /* keep last value */ }
+    if (s.v === null) setTimeout(go, 15_000); // fast retry until first success (boot races)
   };
   go();
   setInterval(go, ms);

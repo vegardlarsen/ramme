@@ -42,7 +42,16 @@ export function normalizeWeather(forecast, sun) {
     };
   });
 
-  const tm = at(26); // ~tomorrow early afternoon; timeseries is hourly for 48h
+  // "I morgen" means tomorrow's daytime weather, not now+26h (which drifts into
+  // tomorrow night in the evening). Pick tomorrow's entry closest to local noon.
+  const tomorrowDate = new Date(now.time);
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrowKey = tomorrowDate.toDateString();
+  const tomorrowEntries = ts.filter((t) => new Date(t.time).toDateString() === tomorrowKey);
+  const tm = tomorrowEntries.length
+    ? tomorrowEntries.reduce((best, t) =>
+        Math.abs(new Date(t.time).getHours() - 12) < Math.abs(new Date(best.time).getHours() - 12) ? t : best)
+    : ts[ts.length - 1];
   return {
     current: {
       temp: Math.round(now.data.instant.details.air_temperature),

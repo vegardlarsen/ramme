@@ -67,6 +67,11 @@ test('calendarView with no relevant events has nothing to display', () => {
   expect(v.items).toEqual([]);
 });
 
+test('unknown module names in the order are ignored', () => {
+  const rows = layoutModules([['clock', 'wether'], 'nope'], ctx());
+  expect(rows.flat().map((m) => m.name)).toEqual(['clock']);
+});
+
 test('a side-by-side module that frees no space is not dropped', () => {
   const rows = layoutModules(ORDER, ctx(), 700);
   const names = rows.flat().map((m) => m.name);

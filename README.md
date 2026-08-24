@@ -61,4 +61,11 @@ Preview any time of day with `?t=HH:MM`, e.g. `http://localhost:5173/?t=21:00`.
    Screen Blanking → No.
 5. Reboot. The Pi boots into the dashboard.
 
+Caveats: these steps assume the browser binary is `chromium-browser` and the user
+account is `pi`, both true on older Raspberry Pi OS images. Newer images may install
+it as `chromium` instead — check with `command -v chromium chromium-browser` and
+adjust `deploy/kiosk-autostart` accordingly. If the first-boot wizard created a
+different username, adjust `User=` in `deploy/mat-signage.service` and the
+`/home/pi/mat` paths above to match.
+
 Updating: `cd /home/pi/mat && git pull && npm ci && npm run build && sudo systemctl restart mat-signage`.

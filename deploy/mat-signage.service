@@ -8,6 +8,7 @@ User=pi
 WorkingDirectory=/home/pi/mat
 ExecStart=/usr/bin/node build/index.js
 Environment=PORT=3000
+Environment=HOST=127.0.0.1
 Restart=always
 RestartSec=5
 

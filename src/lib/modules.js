@@ -49,6 +49,7 @@ const GAP = 36;
 export function layoutModules(order, ctx, avail = 1776) {
   let rows = order
     .map((entry) => [entry].flat()
+      .filter((name) => REGISTRY[name])
       .map((name) => ({ name, ...REGISTRY[name] }))
       .filter((m) => m.active(ctx)))
     .filter((r) => r.length);
