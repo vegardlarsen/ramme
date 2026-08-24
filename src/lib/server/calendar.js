@@ -34,7 +34,8 @@ export function eventsFromICS(text, label, winStart, winEnd) {
 
 export async function fetchCalendars(people) {
   const winStart = new Date(); winStart.setHours(0, 0, 0, 0);
-  const winEnd = new Date(+winStart + 48 * 3600_000);
+  const winEnd = new Date(winStart);
+  winEnd.setDate(winEnd.getDate() + 2);
   return {
     people: await Promise.all(people.map(async (p) => {
       const perFeed = await Promise.all(p.feeds.map(async (f) => {
