@@ -40,6 +40,7 @@
     <div class="content">
       {#each rows as row (row.map((m) => m.name).join())}
         <div class="mrow" class:grow={row.some((m) => m.flex)}
+             style={row.some((m) => m.flex) ? `height: ${Math.max(...row.map((m) => m.minHeight))}px` : null}
              transition:fade={{ duration: 1000 }}>
           {#each row as m (m.name)}
             {@const C = COMPONENTS[m.name]}
@@ -60,6 +61,9 @@
   .content { position: absolute; inset: 0; padding: 72px; display: flex; flex-direction: column;
              gap: 36px; box-sizing: border-box; }
   .mrow { display: flex; gap: 18px; justify-content: space-between; align-items: flex-start; }
-  .mrow.grow { flex: 1; align-items: stretch; }
+  /* Flexible rows render at their budgeted height; the first one pulls itself and
+     every later row to the bottom of the screen, leaving open sky above. */
+  .mrow.grow { margin-top: auto; align-items: stretch; flex: none; }
+  .mrow.grow ~ .mrow.grow { margin-top: 0; }
   .mrow.grow > :global(*) { flex: 1; display: flex; flex-direction: column; }
 </style>
