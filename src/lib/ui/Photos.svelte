@@ -5,7 +5,7 @@
   const url = $derived.by(() => {
     const urls = photos.v?.photos ?? [];
     if (!urls.length) return null;
-    return urls[Math.floor(+clock.now / 300_000) % urls.length];
+    return urls[Math.floor(+clock.now / 3_600_000) % urls.length];
   });
 </script>
 
