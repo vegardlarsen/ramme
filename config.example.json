@@ -1,0 +1,21 @@
+{
+  "lat": 59.91,
+  "lon": 10.75,
+  "modules": [["clock", "weather"], "hourly", "reminder", "photos", "calendar"],
+  "people": [
+    { "name": "Vegard", "color": "#C4572E", "feeds": [
+      { "url": "https://example.com/work.ics", "label": "jobb" },
+      { "url": "https://example.com/home.ics", "label": "privat" }
+    ]},
+    { "name": "Anne C.", "color": "#3A6EA5", "feeds": [
+      { "url": "https://example.com/annec.ics", "label": "privat" }
+    ]}
+  ],
+  "icloudAlbumToken": "",
+  "reminders": [
+    { "title": "Gymtøy på skolen", "subtitle": "Louise · kroppsøving 3. time",
+      "label": "Før 08:00", "days": [1], "from": "05:30", "until": "08:00" },
+    { "title": "Sett ut papirdunken", "subtitle": "Papiravfall hentes i morgen tidlig",
+      "label": "I kveld", "days": [4], "from": "19:00", "until": "23:59" }
+  ]
+}
