@@ -16,7 +16,7 @@
 
 {#if w}
   <div class="panel" style="background: {panel}">
-    <img src="/weather/{w.current.symbol}.svg" alt="" width="58" height="58" />
+    <img src="/weather/{w.current.symbol}.svg" alt="" width="116" height="116" />
     <div class="temp">{w.current.temp}°</div>
     <div class="sub">{sub}</div>
   </div>

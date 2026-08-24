@@ -34,8 +34,8 @@ export function calendarView(ctx) {
 // tight (higher = kept). flex: fills leftover vertical space when rendered.
 export const REGISTRY = {
   clock:    { minHeight: 270, priority: 100, flex: false, active: () => true },
-  weather:  { minHeight: 240, priority: 80,  flex: false, active: (c) => !!c.weather },
-  hourly:   { minHeight: 150, priority: 60,  flex: false, active: (c) => !!c.weather },
+  weather:  { minHeight: 270, priority: 80,  flex: false, active: (c) => !!c.weather },
+  hourly:   { minHeight: 185, priority: 60,  flex: false, active: (c) => !!c.weather },
   reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
   calendar: { minHeight: 170, priority: 70,  flex: false, active: (c) => calendarView(c).items.length > 0 },
