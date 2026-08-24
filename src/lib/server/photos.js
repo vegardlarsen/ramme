@@ -1,12 +1,14 @@
-async function apiPost(host, token, path, body) {
+async function apiPost(host, token, path, body, hops = 0) {
   const res = await fetch(`https://${host}/${token}/sharedstreams/${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify(body),
   });
   const data = await res.json().catch(() => ({}));
-  if (res.status === 330 && data['X-Apple-MMe-Host'])
-    return apiPost(data['X-Apple-MMe-Host'], token, path, body);
+  if (res.status === 330 && data['X-Apple-MMe-Host']) {
+    if (hops >= 3) throw new Error(`icloud ${path} -> too many 330 redirects`);
+    return apiPost(data['X-Apple-MMe-Host'], token, path, body, hops + 1);
+  }
   if (!res.ok) throw new Error(`icloud ${path} -> ${res.status}`);
   return data;
 }
