@@ -1,21 +1,65 @@
 <script>
-	let vw = $state(1080), vh = $state(1920);
-	const scale = $derived(Math.min(vw / 1080, vh / 1920));
+  import { fade } from 'svelte/transition';
+  import Clock from '$lib/ui/Clock.svelte';
+  import CurrentWeather from '$lib/ui/CurrentWeather.svelte';
+  import HourlyStrip from '$lib/ui/HourlyStrip.svelte';
+  import Reminder from '$lib/ui/Reminder.svelte';
+  import Photos from '$lib/ui/Photos.svelte';
+  import Calendar from '$lib/ui/Calendar.svelte';
+  import { clock, weather, calendar, photos, cfg } from '$lib/data.svelte.js';
+  import { layoutModules, hourOf } from '$lib/modules.js';
+  import { skyAt, textColor, panelColor, rgb } from '$lib/sky.js';
+
+  const COMPONENTS = {
+    clock: Clock, weather: CurrentWeather, hourly: HourlyStrip,
+    reminder: Reminder, photos: Photos, calendar: Calendar,
+  };
+
+  let vw = $state(1080), vh = $state(1920);
+  const scale = $derived(Math.min(vw / 1080, vh / 1920));
+
+  const h = $derived(hourOf(clock.now));
+  const cloud = $derived(weather.v?.current.cloud ?? 0.3);
+  const sky = $derived(skyAt(h, cloud));
+  const txt = $derived(textColor(h));
+  const panel = $derived(panelColor(h));
+
+  const ctx = $derived({
+    weather: weather.v, calendar: calendar.v,
+    photos: photos.v?.photos ?? [], reminders: cfg.v?.reminders ?? [],
+    now: clock.now,
+  });
+  const rows = $derived(layoutModules(cfg.v?.modules ?? [], ctx));
 </script>
 
 <svelte:window bind:innerWidth={vw} bind:innerHeight={vh} />
 
 <div class="viewport">
-	<div class="stage" style="transform: scale({scale})">
-		<!-- filled by Task 8 -->
-	</div>
+  <div class="stage" style="transform: scale({scale}); color: {txt}">
+    <div class="sky" style="background: linear-gradient(172deg, {rgb(sky[0])} 0%, {rgb(sky[1])} 52%, {rgb(sky[2])} 100%)"></div>
+    <div class="content">
+      {#each rows as row (row.map((m) => m.name).join())}
+        <div class="mrow" class:grow={row.some((m) => m.flex)}
+             transition:fade={{ duration: 1000 }}>
+          {#each row as m (m.name)}
+            {@const C = COMPONENTS[m.name]}
+            <C {panel} />
+          {/each}
+        </div>
+      {/each}
+    </div>
+  </div>
 </div>
 
 <style>
-	:global(body) { margin: 0; background: #141828; overflow: hidden; cursor: none; }
-	.viewport { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
-	.stage {
-		width: 1080px; height: 1920px; flex: none; position: relative; overflow: hidden;
-		font-family: 'Outfit', sans-serif; transform-origin: center;
-	}
+  :global(body) { margin: 0; background: #141828; overflow: hidden; cursor: none; }
+  .viewport { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .stage { width: 1080px; height: 1920px; flex: none; position: relative; overflow: hidden;
+           font-family: 'Outfit', sans-serif; transition: color 2s; transform-origin: center; }
+  .sky { position: absolute; inset: 0; transition: background 30s linear; }
+  .content { position: absolute; inset: 0; padding: 72px; display: flex; flex-direction: column;
+             gap: 36px; box-sizing: border-box; }
+  .mrow { display: flex; gap: 18px; justify-content: space-between; align-items: flex-start; }
+  .mrow.grow { flex: 1; align-items: stretch; }
+  .mrow.grow > :global(*) { flex: 1; display: flex; flex-direction: column; }
 </style>
