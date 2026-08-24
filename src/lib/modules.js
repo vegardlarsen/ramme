@@ -1,33 +1,23 @@
 import { activeReminder } from './reminders.js';
-import { mode } from './sky.js';
 
 export const hourOf = (d) => d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
 
-// Per-mode calendar content. Empty items = the module has nothing to display.
+// One card per person: what's still ahead of them today; from 20:00 the view
+// switches to tomorrow's agenda (`tomorrow: true`). Empty items = nothing to
+// show = the module hides itself.
 export function calendarView(ctx) {
   const now = ctx.now;
-  const m = mode(hourOf(now));
   const people = ctx.calendar?.people ?? [];
-  const end = new Date(now); end.setHours(24, 0, 0, 0);
-  const all = people.flatMap((p) => p.events.map((e) => ({ ...e, who: p.name })));
-  const bySt = (a, b) => (a.start < b.start ? -1 : 1);
-
-  if (m === 'day') {
-    const upcoming = all
-      .filter((e) => !e.allDay && new Date(e.end) > now && new Date(e.start) < end)
-      .sort(bySt);
-    return { mode: m, items: upcoming.slice(0, 3) };
-  }
-  if (m === 'evening') {
-    const tomorrow = all.filter((e) => new Date(e.start) >= end).sort(bySt)[0];
-    return { mode: m, items: tomorrow ? [tomorrow] : [] };
-  }
-  // morning: one card per person, their first not-yet-ended event today
-  const perPerson = people.map((p) => ({
+  const tomorrow = now.getHours() >= 20;
+  const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+  if (tomorrow) dayStart.setDate(dayStart.getDate() + 1);
+  const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
+  const items = people.map((p) => ({
     name: p.name, color: p.color,
-    next: p.events.find((e) => !e.allDay && new Date(e.end) > now && new Date(e.start) < end),
+    events: p.events.filter((e) =>
+      new Date(e.start) >= dayStart && new Date(e.start) < dayEnd && new Date(e.end) > now),
   }));
-  return { mode: m, items: perPerson.some((p) => p.next) ? perPerson : [] };
+  return { tomorrow, items: items.some((p) => p.events.length) ? items : [] };
 }
 
 // minHeight: the design's block heights. priority: what survives when space is

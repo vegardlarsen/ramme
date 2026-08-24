@@ -43,23 +43,22 @@ test('photos render when there is room', () => {
   expect(layoutModules(ORDER, ctx()).flat().map((m) => m.name)).toContain('photos');
 });
 
-test('calendarView morning: card per person', () => {
+test('calendarView: one card per person with today\'s remaining events', () => {
   const v = calendarView(ctx());
-  expect(v.mode).toBe('morning');
+  expect(v.tomorrow).toBe(false);
   expect(v.items[0].name).toBe('Vegard');
-  expect(v.items[0].next.title).toBe('Statusmøte');
+  expect(v.items[0].events.map((e) => e.title)).toEqual(['Statusmøte']); // Bursdag is tomorrow
 });
 
-test('calendarView day: upcoming chips with who', () => {
-  const v = calendarView(ctx({ now: monday('09:30') }));
-  expect(v.mode).toBe('day');
-  expect(v.items[0]).toMatchObject({ title: 'Statusmøte', who: 'Vegard' });
+test('calendarView: finished events drop off during the day', () => {
+  const v = calendarView(ctx({ now: monday('11:00') })); // Statusmøte ended 10:00 local
+  expect(v.items).toEqual([]); // nothing left today -> module hides
 });
 
-test('calendarView evening: first event tomorrow', () => {
+test('calendarView: from 20:00 the cards show tomorrow', () => {
   const v = calendarView(ctx({ now: monday('21:00') }));
-  expect(v.mode).toBe('evening');
-  expect(v.items[0].title).toBe('Bursdag');
+  expect(v.tomorrow).toBe(true);
+  expect(v.items[0].events.map((e) => e.title)).toEqual(['Bursdag']);
 });
 
 test('calendarView with no relevant events has nothing to display', () => {
