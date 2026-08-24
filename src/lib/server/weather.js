@@ -1,15 +1,5 @@
 const UA = 'mat-signage/1.0 vegard@beat.no';
 
-export function iconFor(symbol) {
-  const night = symbol.endsWith('_night');
-  const s = symbol.replace(/_(day|night|polartwilight)$/, '');
-  if (s.includes('snow') || s.includes('sleet')) return 'snow';
-  if (s.includes('rain')) return 'rain';
-  if (s === 'clearsky' || s === 'fair') return night ? 'moon' : 'sun';
-  if (s === 'partlycloudy') return night ? 'moon' : 'cloudsun';
-  return 'cloud';
-}
-
 const TEXT_NO = {
   clearsky: 'klart', fair: 'lettskyet', partlycloudy: 'delvis skyet', cloudy: 'skyet',
   fog: 'tåke', rain: 'regn', lightrain: 'lett regn', heavyrain: 'kraftig regn',
@@ -38,7 +28,7 @@ export function normalizeWeather(forecast, sun) {
     return {
       hour: String(new Date(t.time).getHours()).padStart(2, '0'),
       temp: Math.round(t.data.instant.details.air_temperature),
-      icon: iconFor(symbolOf(t)),
+      symbol: symbolOf(t),
     };
   });
 
@@ -55,14 +45,14 @@ export function normalizeWeather(forecast, sun) {
   return {
     current: {
       temp: Math.round(now.data.instant.details.air_temperature),
-      icon: iconFor(symbol), text: textFor(symbol), precip, cloud,
+      symbol, text: textFor(symbol), precip, cloud,
     },
     hourly,
     sunrise: hhmm(sun.properties.sunrise.time),
     sunset: hhmm(sun.properties.sunset.time),
     tomorrow: {
       temp: Math.round(tm.data.instant.details.air_temperature),
-      icon: iconFor(symbolOf(tm)), text: textFor(symbolOf(tm)),
+      symbol: symbolOf(tm), text: textFor(symbolOf(tm)),
     },
     updatedAt: new Date().toISOString(),
   };

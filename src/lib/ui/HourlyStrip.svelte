@@ -1,5 +1,4 @@
 <script>
-  import Icon from './Icon.svelte';
   import { weather } from '$lib/data.svelte.js';
   let { panel } = $props();
 </script>
@@ -9,7 +8,7 @@
     {#each weather.v.hourly as h}
       <div class="item">
         <span class="t">{h.hour}</span>
-        <Icon name={h.icon} size={32} />
+        <img src="/weather/{h.symbol}.svg" alt="" width="32" height="32" />
         <span class="temp">{h.temp}°</span>
       </div>
     {/each}

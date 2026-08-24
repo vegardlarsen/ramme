@@ -1,5 +1,4 @@
 <script>
-  import Icon from './Icon.svelte';
   import { clock, weather } from '$lib/data.svelte.js';
   import { hourOf } from '$lib/modules.js';
   import { mode } from '$lib/sky.js';
@@ -17,7 +16,7 @@
 
 {#if w}
   <div class="panel" style="background: {panel}">
-    <Icon name={w.current.icon} size={58} />
+    <img src="/weather/{w.current.symbol}.svg" alt="" width="58" height="58" />
     <div class="temp">{w.current.temp}°</div>
     <div class="sub">{sub}</div>
   </div>

@@ -1,5 +1,6 @@
 import { test, expect } from 'vitest';
-import { normalizeWeather, iconFor } from '../src/lib/server/weather.js';
+import { readdirSync } from 'node:fs';
+import { normalizeWeather } from '../src/lib/server/weather.js';
 
 const entry = (time, temp, cloud, symbol, precip = 0) => ({
   time,
@@ -20,19 +21,18 @@ const sun = { properties: {
   sunset:  { time: '2026-08-24T19:02:00Z' },
 } };
 
-test('iconFor maps MET symbol codes to design icons', () => {
-  expect(iconFor('clearsky_day')).toBe('sun');
-  expect(iconFor('clearsky_night')).toBe('moon');
-  expect(iconFor('partlycloudy_day')).toBe('cloudsun');
-  expect(iconFor('cloudy')).toBe('cloud');
-  expect(iconFor('lightrainshowers_day')).toBe('rain');
-  expect(iconFor('heavysnow')).toBe('snow');
+test('symbol codes pass through raw and have a matching vendored MET icon', () => {
+  const w = normalizeWeather(forecast, sun);
+  const icons = new Set(readdirSync('static/weather'));
+  for (const s of [w.current.symbol, w.tomorrow.symbol, ...w.hourly.map((h) => h.symbol)]) {
+    expect(icons.has(`${s}.svg`)).toBe(true);
+  }
 });
 
 test('normalizeWeather produces the screen model', () => {
   const w = normalizeWeather(forecast, sun);
   expect(w.current.temp).toBe(16);
-  expect(w.current.icon).toBe('cloudsun');
+  expect(w.current.symbol).toBe('partlycloudy_day');
   expect(w.current.cloud).toBeCloseTo(0.35);
   expect(w.hourly).toHaveLength(6);
   expect(w.hourly[0].temp).toBe(17);
