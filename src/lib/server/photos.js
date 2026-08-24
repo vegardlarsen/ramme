@@ -13,13 +13,17 @@ async function apiPost(host, token, path, body, hops = 0) {
   return data;
 }
 
-export function pickUrls(stream, assets) {
+export function pickPhotos(stream, assets) {
   return (stream.photos ?? [])
     .map((p) => {
       const best = Object.values(p.derivatives ?? {})
         .sort((a, b) => Number(b.width) - Number(a.width))[0];
       const item = best && assets.items?.[best.checksum];
-      return item && `https://${item.url_location}${item.url_path}`;
+      return item && {
+        url: `https://${item.url_location}${item.url_path}`,
+        caption: p.caption?.trim() || null,
+        takenAt: p.dateCreated ?? null,
+      };
     })
     .filter(Boolean);
 }
@@ -29,5 +33,5 @@ export async function fetchAlbum(token) {
   const stream = await apiPost('p23-sharedstreams.icloud.com', token, 'webstream', { streamCtag: null });
   const guids = (stream.photos ?? []).map((p) => p.photoGuid);
   const assets = await apiPost('p23-sharedstreams.icloud.com', token, 'webasseturls', { photoGuids: guids });
-  return { photos: pickUrls(stream, assets) };
+  return { photos: pickPhotos(stream, assets) };
 }

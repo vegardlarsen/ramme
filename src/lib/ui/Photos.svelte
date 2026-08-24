@@ -2,20 +2,33 @@
   import { fade } from 'svelte/transition';
   import { clock, photos, cfg } from '$lib/data.svelte.js';
 
-  const url = $derived.by(() => {
-    const urls = photos.v?.photos ?? [];
-    if (!urls.length) return null;
+  const photo = $derived.by(() => {
+    const list = photos.v?.photos ?? [];
+    if (!list.length) return null;
     const ms = (cfg.v?.photoIntervalMinutes ?? 60) * 60_000;
-    return urls[Math.floor(+clock.now / ms) % urls.length];
+    return list[Math.floor(+clock.now / ms) % list.length];
+  });
+
+  // "Sommerferie · Juli 2025" — caption from iCloud when set, month/year of the
+  // photo as a memory cue.
+  const caption = $derived.by(() => {
+    if (!photo) return '';
+    const when = photo.takenAt
+      ? new Date(photo.takenAt).toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' })
+      : '';
+    return [photo.caption, when && when[0].toUpperCase() + when.slice(1)]
+      .filter(Boolean).join(' · ');
   });
 </script>
 
-{#if url}
+{#if photo}
   <div class="frame">
-    {#key url}
-      <img src={url} alt="" in:fade={{ duration: 1500 }} out:fade={{ duration: 1500 }} />
+    {#key photo.url}
+      <img src={photo.url} alt="" in:fade={{ duration: 1500 }} out:fade={{ duration: 1500 }} />
     {/key}
-    <div class="credit">Fra bildearkivet</div>
+    {#if caption}
+      <div class="credit">{caption}</div>
+    {/if}
   </div>
 {/if}
 
