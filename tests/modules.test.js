@@ -66,3 +66,10 @@ test('calendarView with no relevant events has nothing to display', () => {
   const v = calendarView(ctx({ calendar: { people: [] } }));
   expect(v.items).toEqual([]);
 });
+
+test('a side-by-side module that frees no space is not dropped', () => {
+  const rows = layoutModules(ORDER, ctx(), 700);
+  const names = rows.flat().map((m) => m.name);
+  expect(names).toContain('weather'); // kept: removing it saves 0px next to taller clock
+  expect(names).not.toContain('reminder');
+});

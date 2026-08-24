@@ -55,10 +55,40 @@ export function layoutModules(order, ctx, avail = 1776) {
   const height = (r) => Math.max(...r.map((m) => m.minHeight));
   const total = () =>
     rows.reduce((s, r) => s + height(r), 0) + GAP * Math.max(0, rows.length - 1);
+
+  const computeSaving = (moduleName) => {
+    // Find which row contains this module
+    const rowIdx = rows.findIndex((r) => r.some((m) => m.name === moduleName));
+    if (rowIdx === -1) return 0;
+
+    const row = rows[rowIdx];
+    const oldHeight = height(row);
+    const newRow = row.filter((m) => m.name !== moduleName);
+
+    if (newRow.length === 0) {
+      // Removing this module removes the entire row; save row height + gap
+      const gapSaved = rowIdx < rows.length - 1 ? GAP : 0;
+      return oldHeight + gapSaved;
+    } else {
+      // Row still has members; saving only if this was the tallest
+      const newHeight = height(newRow);
+      return oldHeight - newHeight;
+    }
+  };
+
   while (rows.length && total() > avail) {
-    const lowest = rows.flat().sort((a, b) => a.priority - b.priority)[0];
+    const allModules = rows.flat();
+
+    // Find modules that save space when removed
+    const modulesThatSaveSpace = allModules.filter((m) => computeSaving(m.name) > 0);
+
+    if (modulesThatSaveSpace.length === 0) break;
+
+    // Drop the one with lowest priority among those that save space
+    const toRemove = modulesThatSaveSpace.sort((a, b) => a.priority - b.priority)[0];
+
     rows = rows
-      .map((r) => r.filter((m) => m.name !== lowest.name))
+      .map((r) => r.filter((m) => m.name !== toRemove.name))
       .filter((r) => r.length);
   }
   return rows;
