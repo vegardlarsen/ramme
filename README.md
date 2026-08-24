@@ -28,6 +28,7 @@ Preview any time of day with `?t=HH:MM`, e.g. `http://localhost:5173/?t=21:00`.
   is shown on non-private events
 - `icloudAlbumToken` — the part after `#` in an iCloud shared-album link
   (`https://www.icloud.com/sharedalbum/#B0xxxx` → `B0xxxx`); empty disables photos
+- `photoIntervalMinutes` — how long each photo stays on screen (default 60)
 - `reminders[]` — `days` (0=søndag..6=lørdag), `from`/`until` `HH:MM` local
 
 ## Raspberry Pi setup (Raspberry Pi OS Bookworm with desktop, 64-bit)

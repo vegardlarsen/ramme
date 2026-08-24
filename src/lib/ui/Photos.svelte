@@ -1,11 +1,12 @@
 <script>
   import { fade } from 'svelte/transition';
-  import { clock, photos } from '$lib/data.svelte.js';
+  import { clock, photos, cfg } from '$lib/data.svelte.js';
 
   const url = $derived.by(() => {
     const urls = photos.v?.photos ?? [];
     if (!urls.length) return null;
-    return urls[Math.floor(+clock.now / 3_600_000) % urls.length];
+    const ms = (cfg.v?.photoIntervalMinutes ?? 60) * 60_000;
+    return urls[Math.floor(+clock.now / ms) % urls.length];
   });
 </script>
 
