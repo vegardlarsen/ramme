@@ -1,0 +1,15 @@
+[Unit]
+Description=mat ambient signage server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/mat
+ExecStart=/usr/bin/node build/index.js
+Environment=PORT=3000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

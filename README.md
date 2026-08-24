@@ -1,42 +1,64 @@
-# sv
+# mat — ambient home signage
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Full-screen 1080×1920 family dashboard built from ordered, toggleable modules:
+weather (yr.no), calendars (iCal), reminders, iCloud photos, with a sky
+background that follows the clock and the weather.
+Design: docs/design/ambient-scene.jsx.
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+## Dev
 
 ```sh
-# recreate this project
-npx sv@0.17.0 create --template minimal --types jsdoc --install npm .
+cp config.example.json config.json   # fill in feeds, position, album token
+npm install
+npm run dev                          # open the printed URL
+npm test
 ```
 
-## Developing
+Preview any time of day with `?t=HH:MM`, e.g. `http://localhost:5173/?t=21:00`.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Config
 
-```sh
-npm run dev
+- `lat`/`lon` — forecast position
+- `modules` — enabled modules in top-to-bottom screen order; remove an entry to
+  disable it; a nested array (e.g. `["clock", "weather"]`) is one side-by-side
+  row. Available: `clock`, `weather`, `hourly`, `reminder`, `photos`, `calendar`.
+  A module with nothing to show hides itself; when everything doesn't fit,
+  the lowest-priority modules (photos first) are dropped.
+- `people[].feeds[]` — one or more iCal URLs per person; `label` ("jobb"/"privat")
+  is shown on non-private events
+- `icloudAlbumToken` — the part after `#` in an iCloud shared-album link
+  (`https://www.icloud.com/sharedalbum/#B0xxxx` → `B0xxxx`); empty disables photos
+- `reminders[]` — `days` (0=søndag..6=lørdag), `from`/`until` `HH:MM` local
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Raspberry Pi setup (Raspberry Pi OS Bookworm with desktop, 64-bit)
 
-## Building
+1. Install Node 22:
+   ```sh
+   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
+   sudo apt-get install -y nodejs
+   ```
+2. Get the app onto the Pi and build it:
+   ```sh
+   git clone <this-repo> /home/pi/mat
+   cd /home/pi/mat
+   cp config.example.json config.json && nano config.json
+   npm ci && npm run build
+   ```
+3. Server as a service:
+   ```sh
+   sudo cp deploy/mat-signage.service /etc/systemd/system/
+   sudo systemctl enable --now mat-signage
+   curl -s localhost:3000/api/weather | head -c 200   # sanity check
+   ```
+4. Kiosk: enable desktop autologin (`sudo raspi-config` → System → Boot/Auto Login →
+   Desktop Autologin), then:
+   ```sh
+   mkdir -p ~/.config/labwc
+   cat deploy/kiosk-autostart >> ~/.config/labwc/autostart
+   ```
+   Check the HDMI output name with `wlr-randr` and adjust the `--output` flag if
+   it isn't `HDMI-A-1`. Disable screen blanking: `sudo raspi-config` → Display →
+   Screen Blanking → No.
+5. Reboot. The Pi boots into the dashboard.
 
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Updating: `cd /home/pi/mat && git pull && npm ci && npm run build && sudo systemctl restart mat-signage`.
