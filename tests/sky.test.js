@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { skyAt, phaseWeights, mode, textColor } from '../src/lib/sky.js';
+import { skyAt, phaseWeights, mode, textColor, skyLuminance } from '../src/lib/sky.js';
 
 test('sky at the 04:30 keyframe matches the design night colors', () => {
   expect(skyAt(4.5, 0)[0].map(Math.round)).toEqual([26, 32, 64]);
@@ -41,4 +41,17 @@ test('modes', () => {
 
 test('textColor returns a css color', () => {
   expect(textColor(13)).toBe('rgb(23,52,69)');
+});
+
+test('text lightness follows sky luminance, not the clock', () => {
+  // 20:15 clear: sky is still a bright sunset -> dark text survives
+  expect(skyLuminance(skyAt(20.25, 0))).toBeGreaterThan(0.5);
+  expect(textColor(20.25, 0)).toBe('rgb(23,52,69)');
+  // 21:30 clear: dusk is genuinely dark -> light text
+  expect(skyLuminance(skyAt(21.5, 0))).toBeLessThan(0.42);
+  expect(textColor(21.5, 0)).toBe('rgb(241,236,250)');
+  // overcast midday stays bright (grey, not dark) -> dark text
+  expect(textColor(13, 1)).toBe('rgb(23,52,69)');
+  // night is dark regardless of cloud
+  expect(textColor(2, 0.5)).toBe('rgb(241,236,250)');
 });

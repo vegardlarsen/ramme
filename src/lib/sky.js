@@ -48,12 +48,28 @@ export function mode(h) {
   return h < 4.5 || h >= 19.5 ? 'evening' : h < 9 ? 'morning' : 'day';
 }
 
-export function textColor(h) {
-  const { pDag, pKveld } = phaseWeights(h);
-  return rgb(mix(mix(TXT.m, TXT.d, pDag), TXT.k, pKveld));
+// Mean relative luminance (0-1) of the three sky gradient stops.
+export function skyLuminance(sky) {
+  const lum = ([r, g, b]) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  return (lum(sky[0]) + lum(sky[1]) + lum(sky[2])) / 3;
 }
 
-export function panelColor(h) {
-  const { pDag, pKveld } = phaseWeights(h);
-  return rgba4(mix(mix(PAN.m, PAN.d, pDag), PAN.k, pKveld));
+// Dark vs light text is decided by what the sky actually looks like, not by
+// the clock — a bright sunset keeps dark text, a gloomy noon would too. The
+// steep ramp (0.42-0.50) makes the low-contrast crossover last minutes, and
+// the page's CSS color transition smooths the flip. Hue still follows the
+// clock (warm morning brown vs day blue).
+function lightness(h, cloud) {
+  const pLight = 1 - smooth(skyLuminance(skyAt(h, cloud)), 0.42, 0.5);
+  return { pDag: phaseWeights(h).pDag, pLight };
+}
+
+export function textColor(h, cloud = 0) {
+  const { pDag, pLight } = lightness(h, cloud);
+  return rgb(mix(mix(TXT.m, TXT.d, pDag), TXT.k, pLight));
+}
+
+export function panelColor(h, cloud = 0) {
+  const { pDag, pLight } = lightness(h, cloud);
+  return rgba4(mix(mix(PAN.m, PAN.d, pDag), PAN.k, pLight));
 }

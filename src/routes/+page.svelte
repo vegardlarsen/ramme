@@ -22,8 +22,8 @@
   const h = $derived(hourOf(clock.now));
   const cloud = $derived(weather.v?.current.cloud ?? 0.3);
   const sky = $derived(skyAt(h, cloud));
-  const txt = $derived(textColor(h));
-  const panel = $derived(panelColor(h));
+  const txt = $derived(textColor(h, cloud));
+  const panel = $derived(panelColor(h, cloud));
 
   const ctx = $derived({
     weather: weather.v, calendar: calendar.v,
