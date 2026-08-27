@@ -9,7 +9,4 @@ test('config.example.json has the shape config.js requires', () => {
 	expect(c.modules.flat()).toContain('clock');
 	expect(c.people[0].feeds[0]).toHaveProperty('url');
 	expect(c.people[0].feeds[0]).toHaveProperty('label');
-	expect(c.reminders[0]).toHaveProperty('from');
-	expect(c.reminders[0]).toHaveProperty('until');
-	expect(c.reminders[0]).toHaveProperty('days');
 });

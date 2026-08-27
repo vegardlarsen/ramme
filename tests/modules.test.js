@@ -2,7 +2,8 @@ import { test, expect } from 'vitest';
 import { layoutModules, calendarView, REGISTRY } from '../src/lib/modules.js';
 
 const monday = (hhmm) => new Date(`2026-08-24T${hhmm}:00`); // Monday, local
-const gym = { title: 'Gymtøy', days: [1], from: '05:30', until: '08:00' };
+// active Monday ~05:30-08:00 local (Europe/Oslo)
+const gym = { title: 'Gymtøy', fromAt: '2026-08-24T03:30:00Z', untilAt: '2026-08-24T06:00:00Z' };
 const weather = { current: { temp: 16 }, hourly: [], tomorrow: { temp: 18, text: 'sol' } };
 const calendar = { people: [
   { name: 'Vegard', color: '#C4572E', events: [

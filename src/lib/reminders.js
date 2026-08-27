@@ -1,20 +1,10 @@
-// Two reminder shapes: static config reminders use weekly windows
-// ({days, from: 'HH:MM', until: 'HH:MM'}); calendar-derived ones use absolute
-// times ({fromAt, untilAt} ISO strings). Earliest deadline wins.
+// Reminders come from calendar events carrying a "!remind" line (see
+// calendar.js); each is an absolute window {fromAt, untilAt, startAt}.
 export function activeReminder(reminders, date) {
-  const hhmm = date.toTimeString().slice(0, 5);
-  const day = date.getDay();
-  const todayAt = (t) => {
-    const d = new Date(date);
-    const [h, m] = t.split(':');
-    d.setHours(+h, +m, 0, 0);
-    return +d;
-  };
-  const deadline = (r) => (r.days ? todayAt(r.until) : +new Date(r.untilAt));
-  const active = reminders.filter((r) => r.days
-    ? r.days.includes(day) && hhmm >= r.from && hhmm <= r.until
-    : +new Date(r.fromAt) <= +date && +date <= +new Date(r.untilAt));
-  return active.sort((a, b) => deadline(a) - deadline(b))[0] ?? null;
+  const active = reminders.filter(
+    (r) => +new Date(r.fromAt) <= +date && +date <= +new Date(r.untilAt),
+  );
+  return active.sort((a, b) => +new Date(a.untilAt) - +new Date(b.untilAt))[0] ?? null;
 }
 
 // Calendar events carrying a "!remind" line, as reminder objects.

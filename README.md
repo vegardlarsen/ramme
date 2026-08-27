@@ -29,9 +29,8 @@ Preview any time of day with `?t=HH:MM`, e.g. `http://localhost:5173/?t=21:00`.
 - `icloudAlbumToken` — the part after `#` in an iCloud shared-album link
   (`https://www.icloud.com/sharedalbum/#B0xxxx` → `B0xxxx`); empty disables photos
 - `photoIntervalMinutes` — how long each photo stays on screen (default 60)
-- `reminders[]` — `days` (0=søndag..6=lørdag), `from`/`until` `HH:MM` local
 
-## Reminders from calendar events
+## Reminders
 
 Any event in a configured feed can raise a reminder card by carrying a
 `!remind` line in its description:
@@ -50,8 +49,8 @@ Sett ut dunken kvelden før
 - The overline label is automatic: "I kveld" the day before, "Før HH:MM" on
   the day itself
 
-Static `reminders[]` in config.json keep working alongside; when several
-reminders are active at once, the one with the earliest deadline shows.
+When several reminders are active at once, the one with the earliest
+deadline shows.
 
 ## Raspberry Pi setup (Raspberry Pi OS Bookworm with desktop, 64-bit)
 

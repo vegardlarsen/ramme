@@ -28,7 +28,7 @@
   const ctx = $derived({
     weather: weather.v, calendar: calendar.v,
     photos: photos.v?.photos ?? [],
-    reminders: [...(cfg.v?.reminders ?? []), ...calendarReminders(calendar.v)],
+    reminders: calendarReminders(calendar.v),
     now: clock.now,
   });
   const rows = $derived(layoutModules(cfg.v?.modules ?? [], ctx));
