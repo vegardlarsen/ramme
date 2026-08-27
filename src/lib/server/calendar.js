@@ -15,17 +15,23 @@ function expand(ev, winStart, winEnd) {
 }
 
 // "!remind", "!remind 3", "!remind 90 min", "!remind 2 days" on its own line
-// in the event description. Bare number = hours; bare !remind = 12 hours.
-const REMIND = /^\s*!remind(?:\s+(\d+)\s*(min(?:ute)?s?|h(?:our)?s?|d(?:ay)?s?)?)?\s*$/im;
+// in the event description; an optional "+ N unit" keeps the card up that
+// long after the event ends: "!remind 12 hours + 4 hours".
+// Bare number = hours; bare !remind = 12 hours before, gone at event end.
+const UNIT = String.raw`min(?:ute)?s?|h(?:our)?s?|d(?:ay)?s?`;
+const REMIND = new RegExp(
+  String.raw`^\s*!remind(?:\s+(\d+)\s*(${UNIT})?)?(?:\s*\+\s*(\d+)\s*(${UNIT})?)?\s*$`, 'im');
+
+const toMs = (n, unit) =>
+  n * (unit === 'm' ? 60_000 : unit === 'd' ? 86_400_000 : 3_600_000);
 
 export function parseRemind(description = '') {
   const m = REMIND.exec(description);
   if (!m) return null;
-  const n = m[1] ? Number(m[1]) : 12;
-  const unit = (m[2] ?? 'h')[0];
-  const leadMs = n * (unit === 'm' ? 60_000 : unit === 'd' ? 86_400_000 : 3_600_000);
+  const leadMs = toMs(m[1] ? Number(m[1]) : 12, (m[2] ?? 'h')[0]);
+  const tailMs = m[3] ? toMs(Number(m[3]), (m[4] ?? 'h')[0]) : 0;
   const subtitle = description.replace(REMIND, '').replace(/\n{2,}/g, '\n').trim() || null;
-  return { leadMs, subtitle };
+  return { leadMs, tailMs, subtitle };
 }
 
 export function eventsFromICS(text, label, winStart, winEnd) {
@@ -43,7 +49,10 @@ export function eventsFromICS(text, label, winStart, winEnd) {
         allDay: ev.datetype === 'date',
         ...(remind && {
           subtitle: remind.subtitle,
-          remind: { from: new Date(+start - remind.leadMs).toISOString() },
+          remind: {
+            from: new Date(+start - remind.leadMs).toISOString(),
+            until: new Date(+end + remind.tailMs).toISOString(),
+          },
         }),
       });
     }

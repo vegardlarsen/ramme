@@ -43,8 +43,10 @@ Sett ut dunken kvelden før
 
 - `!remind N min|hours|days` — how long before the event the card appears;
   bare number means hours, bare `!remind` means 12 hours
+- Optional `+ N min|hours|days` keeps the card up that long **after** the
+  event ends: `!remind 12 hours + 4 hours`
 - The card shows the event's title, plus the rest of the description as the
-  smaller line; it stays up until the event **ends**
+  smaller line; without a `+` part it disappears when the event ends
 - The overline label is automatic: "I kveld" the day before, "Før HH:MM" on
   the day itself
 

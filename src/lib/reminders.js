@@ -24,6 +24,6 @@ export function calendarReminders(calendar) {
     .filter((e) => e.remind)
     .map((e) => ({
       title: e.title, subtitle: e.subtitle ?? null,
-      fromAt: e.remind.from, untilAt: e.end, startAt: e.start,
+      fromAt: e.remind.from, untilAt: e.remind.until, startAt: e.start,
     }));
 }

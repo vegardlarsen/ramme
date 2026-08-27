@@ -45,12 +45,13 @@ test('mixed shapes: earliest deadline wins across both', () => {
 test('calendarReminders extracts events carrying remind', () => {
   const cal = { people: [{ name: 'V', events: [
     { title: 'Papp/plast', start: '2026-08-25T05:00:00.000Z', end: '2026-08-25T05:30:00.000Z',
-      subtitle: 'Sett ut dunken', remind: { from: '2026-08-24T17:00:00.000Z' } },
+      subtitle: 'Sett ut dunken',
+      remind: { from: '2026-08-24T17:00:00.000Z', until: '2026-08-25T09:30:00.000Z' } },
     { title: 'Fotball', start: 'x', end: 'y' },
   ] }] };
   expect(calendarReminders(cal)).toEqual([{
     title: 'Papp/plast', subtitle: 'Sett ut dunken',
-    fromAt: '2026-08-24T17:00:00.000Z', untilAt: '2026-08-25T05:30:00.000Z',
+    fromAt: '2026-08-24T17:00:00.000Z', untilAt: '2026-08-25T09:30:00.000Z',
     startAt: '2026-08-25T05:00:00.000Z',
   }]);
   expect(calendarReminders(null)).toEqual([]);
