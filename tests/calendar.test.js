@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { eventsFromICS } from '../src/lib/server/calendar.js';
+import { eventsFromICS, parseRemind } from '../src/lib/server/calendar.js';
 
 const ICS = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -9,6 +9,13 @@ UID:one@test
 DTSTART:20260824T143000Z
 DTEND:20260824T153000Z
 SUMMARY:Fotball
+END:VEVENT
+BEGIN:VEVENT
+UID:waste@test
+DTSTART:20260825T050000Z
+DTEND:20260825T053000Z
+SUMMARY:Papp/plast
+DESCRIPTION:!remind 12 hours\\nSett ut dunken kvelden før
 END:VEVENT
 BEGIN:VEVENT
 UID:weekly@test
@@ -53,4 +60,23 @@ test('events are sorted by start', () => {
   const evs = eventsFromICS(ICS, 'x', ...win);
   const starts = evs.map((e) => +new Date(e.start));
   expect(starts).toEqual([...starts].sort((a, b) => a - b));
+});
+
+test('!remind in the description becomes a reminder window on the event', () => {
+  const evs = eventsFromICS(ICS, 'privat', ...win);
+  const waste = evs.find((e) => e.title === 'Papp/plast');
+  expect(waste.remind.from).toBe('2026-08-24T17:00:00.000Z'); // 12h before 05:00Z start
+  expect(waste.subtitle).toBe('Sett ut dunken kvelden før');
+  expect(evs.find((e) => e.title === 'Fotball').remind).toBeUndefined();
+});
+
+test('parseRemind grammar', () => {
+  expect(parseRemind('!remind 3 hours').leadMs).toBe(3 * 3_600_000);
+  expect(parseRemind('!remind 90 min').leadMs).toBe(90 * 60_000);
+  expect(parseRemind('!remind 2 days').leadMs).toBe(2 * 86_400_000);
+  expect(parseRemind('!remind 3').leadMs).toBe(3 * 3_600_000);   // bare number = hours
+  expect(parseRemind('!remind').leadMs).toBe(12 * 3_600_000);    // bare = 12 hours
+  expect(parseRemind('agenda\n!remind 3h\nring vaktmester').subtitle).toBe('agenda\nring vaktmester');
+  expect(parseRemind('!remind 1 day\n').subtitle).toBeNull();
+  expect(parseRemind('en vennlig påminnelse om møtet')).toBeNull();
 });

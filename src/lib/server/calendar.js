@@ -14,11 +14,26 @@ function expand(ev, winStart, winEnd) {
     .map((d) => ({ start: d, end: new Date(+d + dur) }));
 }
 
+// "!remind", "!remind 3", "!remind 90 min", "!remind 2 days" on its own line
+// in the event description. Bare number = hours; bare !remind = 12 hours.
+const REMIND = /^\s*!remind(?:\s+(\d+)\s*(min(?:ute)?s?|h(?:our)?s?|d(?:ay)?s?)?)?\s*$/im;
+
+export function parseRemind(description = '') {
+  const m = REMIND.exec(description);
+  if (!m) return null;
+  const n = m[1] ? Number(m[1]) : 12;
+  const unit = (m[2] ?? 'h')[0];
+  const leadMs = n * (unit === 'm' ? 60_000 : unit === 'd' ? 86_400_000 : 3_600_000);
+  const subtitle = description.replace(REMIND, '').replace(/\n{2,}/g, '\n').trim() || null;
+  return { leadMs, subtitle };
+}
+
 export function eventsFromICS(text, label, winStart, winEnd) {
   const parsed = ical.sync.parseICS(text);
   const out = [];
   for (const ev of Object.values(parsed)) {
     if (ev.type !== 'VEVENT') continue;
+    const remind = parseRemind(ev.description ?? '');
     for (const { start, end } of expand(ev, winStart, winEnd)) {
       out.push({
         title: ev.summary ?? '(uten tittel)',
@@ -26,6 +41,10 @@ export function eventsFromICS(text, label, winStart, winEnd) {
         end: end.toISOString(),
         label,
         allDay: ev.datetype === 'date',
+        ...(remind && {
+          subtitle: remind.subtitle,
+          remind: { from: new Date(+start - remind.leadMs).toISOString() },
+        }),
       });
     }
   }

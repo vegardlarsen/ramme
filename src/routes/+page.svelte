@@ -8,6 +8,7 @@
   import Calendar from '$lib/ui/Calendar.svelte';
   import { clock, weather, calendar, photos, cfg } from '$lib/data.svelte.js';
   import { layoutModules, hourOf } from '$lib/modules.js';
+  import { calendarReminders } from '$lib/reminders.js';
   import { skyAt, textColor, panelColor, rgb } from '$lib/sky.js';
 
   const COMPONENTS = {
@@ -26,7 +27,8 @@
 
   const ctx = $derived({
     weather: weather.v, calendar: calendar.v,
-    photos: photos.v?.photos ?? [], reminders: cfg.v?.reminders ?? [],
+    photos: photos.v?.photos ?? [],
+    reminders: [...(cfg.v?.reminders ?? []), ...calendarReminders(calendar.v)],
     now: clock.now,
   });
   const rows = $derived(layoutModules(cfg.v?.modules ?? [], ctx));

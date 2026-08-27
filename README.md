@@ -31,6 +31,26 @@ Preview any time of day with `?t=HH:MM`, e.g. `http://localhost:5173/?t=21:00`.
 - `photoIntervalMinutes` — how long each photo stays on screen (default 60)
 - `reminders[]` — `days` (0=søndag..6=lørdag), `from`/`until` `HH:MM` local
 
+## Reminders from calendar events
+
+Any event in a configured feed can raise a reminder card by carrying a
+`!remind` line in its description:
+
+```
+!remind 12 hours
+Sett ut dunken kvelden før
+```
+
+- `!remind N min|hours|days` — how long before the event the card appears;
+  bare number means hours, bare `!remind` means 12 hours
+- The card shows the event's title, plus the rest of the description as the
+  smaller line; it stays up until the event **ends**
+- The overline label is automatic: "I kveld" the day before, "Før HH:MM" on
+  the day itself
+
+Static `reminders[]` in config.json keep working alongside; when several
+reminders are active at once, the one with the earliest deadline shows.
+
 ## Raspberry Pi setup (Raspberry Pi OS Bookworm with desktop, 64-bit)
 
 1. Install Node 22:

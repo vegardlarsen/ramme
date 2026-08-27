@@ -1,17 +1,24 @@
 <script>
-  import { clock, cfg } from '$lib/data.svelte.js';
-  import { activeReminder } from '$lib/reminders.js';
+  import { clock, cfg, calendar } from '$lib/data.svelte.js';
+  import { activeReminder, calendarReminders } from '$lib/reminders.js';
   import { hourOf } from '$lib/modules.js';
   import { mode } from '$lib/sky.js';
 
-  const r = $derived(activeReminder(cfg.v?.reminders ?? [], clock.now));
+  const r = $derived(activeReminder(
+    [...(cfg.v?.reminders ?? []), ...calendarReminders(calendar.v)], clock.now));
   const evening = $derived(mode(hourOf(clock.now)) === 'evening');
+  const hhmm = (iso) => new Date(iso).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+  // Calendar reminders get an automatic label: "I kveld" the day before,
+  // "Før HH:MM" once the event's day arrives.
+  const label = $derived(!r ? '' : r.label ?? (
+    new Date(r.startAt).toDateString() === clock.now.toDateString()
+      ? `Før ${hhmm(r.startAt)}` : 'I kveld'));
 </script>
 
 {#if r}
   <div class="center">
     <div class="card" class:evening>
-      <div class="label">{r.label}</div>
+      <div class="label">{label}</div>
       <div class="title">{r.title}</div>
       {#if r.subtitle}<div class="sub">{r.subtitle}</div>{/if}
     </div>
