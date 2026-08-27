@@ -23,6 +23,7 @@ export function pickPhotos(stream, assets) {
         url: `https://${item.url_location}${item.url_path}`,
         caption: p.caption?.trim() || null,
         takenAt: p.dateCreated ?? null,
+        aspect: Number(p.width) / Number(p.height) || 1.5,
       };
     })
     .filter(Boolean);

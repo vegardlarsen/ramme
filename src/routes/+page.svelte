@@ -42,11 +42,11 @@
     <div class="content">
       {#each rows as row (row.map((m) => m.name).join())}
         <div class="mrow" class:grow={row.some((m) => m.flex)}
-             style={row.some((m) => m.flex) ? `height: ${Math.max(...row.map((m) => m.minHeight))}px` : null}
+             style={row.some((m) => m.flex) ? `height: ${Math.max(...row.map((m) => m.maxHeight ?? m.minHeight))}px` : null}
              transition:fade={{ duration: 1000 }}>
           {#each row as m (m.name)}
             {@const C = COMPONENTS[m.name]}
-            <C {panel} />
+            <C {panel} maxHeight={m.maxHeight ?? m.minHeight} />
           {/each}
         </div>
       {/each}
