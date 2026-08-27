@@ -44,14 +44,25 @@ test('textColor returns a css color', () => {
 });
 
 test('text lightness follows sky luminance, not the clock', () => {
-  // 20:15 clear: sky is still a bright sunset -> dark text survives
-  expect(skyLuminance(skyAt(20.25, 0))).toBeGreaterThan(0.5);
-  expect(textColor(20.25, 0)).toBe('rgb(23,52,69)');
-  // 21:30 clear: dusk is genuinely dark -> light text
-  expect(skyLuminance(skyAt(21.5, 0))).toBeLessThan(0.42);
-  expect(textColor(21.5, 0)).toBe('rgb(241,236,250)');
+  // 20:45 clear: still a bright dusk -> dark text survives (no mid-blend mud)
+  expect(skyLuminance(skyAt(20.75, 0))).toBeGreaterThan(0.3);
+  expect(textColor(20.75, 0)).toBe('rgb(23,52,69)');
+  // 22:00 clear: genuinely dark -> light text
+  expect(skyLuminance(skyAt(22, 0))).toBeLessThan(0.3);
+  expect(textColor(22, 0)).toBe('rgb(241,236,250)');
   // overcast midday stays bright (grey, not dark) -> dark text
   expect(textColor(13, 1)).toBe('rgb(23,52,69)');
   // night is dark regardless of cloud
   expect(textColor(2, 0.5)).toBe('rgb(241,236,250)');
+});
+
+test('the flip is binary — no intermediate gray text, ever', () => {
+  for (let h = 0; h < 24; h += 0.1) {
+    for (const cloud of [0, 0.5, 1]) {
+      const [r, g, b] = textColor(h, cloud).match(/\d+/g).map(Number);
+      const isLight = r === 241 && g === 236 && b === 250;
+      const isDarkFamily = r <= 58 && g <= 52 && b <= 69; // any brown/blue mix
+      expect(isLight || isDarkFamily).toBe(true);
+    }
+  }
 });

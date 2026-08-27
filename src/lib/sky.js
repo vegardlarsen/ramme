@@ -55,12 +55,12 @@ export function skyLuminance(sky) {
 }
 
 // Dark vs light text is decided by what the sky actually looks like, not by
-// the clock — a bright sunset keeps dark text, a gloomy noon would too. The
-// steep ramp (0.42-0.50) makes the low-contrast crossover last minutes, and
-// the page's CSS color transition smooths the flip. Hue still follows the
-// clock (warm morning brown vs day blue).
+// the clock — and the flip is binary: any blend reads as mud on a dusk sky.
+// Equal contrast sits at luminance ~0.23; 0.30 biases slightly toward light
+// text so overcast nights (grey-lifted to ~0.26) stay light. Both choices
+// give ~3:1 near the flip, and the page's 2s CSS transition softens it.
 function lightness(h, cloud) {
-  const pLight = 1 - smooth(skyLuminance(skyAt(h, cloud)), 0.42, 0.5);
+  const pLight = skyLuminance(skyAt(h, cloud)) < 0.3 ? 1 : 0;
   return { pDag: phaseWeights(h).pDag, pLight };
 }
 
