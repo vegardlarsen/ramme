@@ -61,7 +61,7 @@ deadline shows.
    ```
 2. Get the app onto the Pi and build it:
    ```sh
-   git clone <this-repo> /home/pi/ramme
+   git clone https://github.com/vegardlarsen/ramme.git /home/pi/ramme
    cd /home/pi/ramme
    cp config.example.json config.json && nano config.json
    npm ci && npm run build
