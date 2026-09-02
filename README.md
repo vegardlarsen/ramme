@@ -3,8 +3,8 @@
 > ⚠️ This project is 100% vibe-coded.
 
 Full-screen 1080×1920 family dashboard built from ordered, toggleable modules:
-weather (yr.no), calendars (iCal), reminders, iCloud photos, with a sky
-background that follows the clock and the weather.
+weather (yr.no), calendars (iCal), reminders, iCloud photos, with a light
+or dark theme following the day's actual sunrise and sunset.
 Design: docs/design/ambient-scene.jsx.
 
 ## Dev
