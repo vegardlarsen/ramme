@@ -1,11 +1,11 @@
 <script>
-  import { clock, calendar } from '$lib/data.svelte.js';
+  import { clock, calendar, weather } from '$lib/data.svelte.js';
   import { activeReminder, calendarReminders } from '$lib/reminders.js';
   import { hourOf } from '$lib/modules.js';
-  import { mode } from '$lib/sky.js';
+  import { isDaylight } from '$lib/sky.js';
 
   const r = $derived(activeReminder(calendarReminders(calendar.v), clock.now));
-  const evening = $derived(mode(hourOf(clock.now)) === 'evening');
+  const evening = $derived(!isDaylight(hourOf(clock.now), weather.v));
   const hhmm = (iso) => new Date(iso).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
   // "I kveld" the day before, "Før HH:MM" once the event's day arrives.
   const label = $derived(!r ? '' :

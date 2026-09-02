@@ -19,8 +19,9 @@ const ctx = (over = {}) => ({
 const names = (rows) => rows.map((r) => r.map((m) => m.name));
 
 test('renders enabled+active modules in config order, with row grouping', () => {
+  // reminder + timeline calendar together leave no room for photos (priority 10)
   expect(names(layoutModules(ORDER, ctx()))).toEqual(
-    [['clock', 'weather'], ['hourly'], ['reminder'], ['photos'], ['calendar']],
+    [['clock', 'weather'], ['hourly'], ['reminder'], ['calendar']],
   );
 });
 
@@ -41,7 +42,24 @@ test('lowest-priority module is dropped when space runs out', () => {
 });
 
 test('photos render when there is room', () => {
-  expect(layoutModules(ORDER, ctx()).flat().map((m) => m.name)).toContain('photos');
+  const c = ctx({ reminders: [] }); // no reminder card -> photos fit
+  expect(layoutModules(ORDER, c).flat().map((m) => m.name)).toContain('photos');
+});
+
+test('flex modules learn how much room they actually have', () => {
+  const rows = layoutModules(ORDER, ctx({ reminders: [] }));
+  const photos = rows.flat().find((m) => m.name === 'photos');
+  const cal = rows.flat().find((m) => m.name === 'calendar');
+  // slack 1776 - (270 + 185 + 500 + 460 + 3*36) = 253, split between photos and calendar
+  expect(photos.maxHeight).toBe(Math.round(500 + 253 / 2));
+  expect(cal.maxHeight).toBe(Math.round(460 + 253 / 2));
+});
+
+test('calendar stretches when only a reminder competes for space', () => {
+  const rows = layoutModules(ORDER, ctx({ photos: [] }));
+  const cal = rows.flat().find((m) => m.name === 'calendar');
+  // slack 1776 - (270 + 185 + 460 + 460 + 3*36) = 293, split with the reminder
+  expect(cal.maxHeight).toBe(Math.round(460 + 293 / 2));
 });
 
 test('calendarView: one card per person with today\'s remaining events', () => {
@@ -51,15 +69,58 @@ test('calendarView: one card per person with today\'s remaining events', () => {
   expect(v.items[0].events.map((e) => e.title)).toEqual(['Statusmøte']); // Bursdag is tomorrow
 });
 
-test('calendarView: finished events drop off during the day', () => {
+test('calendarView: the day stays static — finished events remain, marked done', () => {
   const v = calendarView(ctx({ now: monday('11:00') })); // Statusmøte ended 10:00 local
-  expect(v.items).toEqual([]); // nothing left today -> module hides
+  expect(v.items[0].timed.map((e) => [e.title, e.done, e.now])).toEqual([['Statusmøte', true, false]]);
 });
 
 test('calendarView: from 20:00 the cards show tomorrow', () => {
   const v = calendarView(ctx({ now: monday('21:00') }));
   expect(v.tomorrow).toBe(true);
   expect(v.items[0].events.map((e) => e.title)).toEqual(['Bursdag']);
+});
+
+test('calendarView: shared hour-rounded timeline with overlap lanes', () => {
+  const cal = { people: [
+    { name: 'Vegard', color: '#C4572E', events: [
+      { title: 'A', start: '2026-08-24T07:00:00.000Z', end: '2026-08-24T09:00:00.000Z', allDay: false },
+      { title: 'B', start: '2026-08-24T08:00:00.000Z', end: '2026-08-24T10:00:00.000Z', allDay: false },
+    ] },
+    { name: 'Louise', events: [
+      { title: 'C', start: '2026-08-24T11:00:00.000Z', end: '2026-08-24T11:30:00.000Z', allDay: false },
+      { title: 'Hel', start: '2026-08-24T00:00:00.000Z', end: '2026-08-25T00:00:00.000Z', allDay: true },
+    ] },
+  ] };
+  const v = calendarView(ctx({ calendar: cal, now: monday('13:15') }));
+  // range 07:00Z–11:30Z rounds to 07:00Z–12:00Z = 5h shared by both columns,
+  // regardless of the current time
+  const [a, b] = v.items[0].timed;
+  expect(a.top).toBe(0);
+  expect(a.height).toBeCloseTo(2 / 5);
+  expect([a.lanes, b.lanes]).toEqual([2, 2]); // A and B overlap -> side by side
+  expect(a.lane).not.toBe(b.lane);
+  expect([a.done, b.done]).toEqual([true, true]); // both ended before 13:15
+  const [c] = v.items[1].timed;
+  expect(c.top).toBeCloseTo(4 / 5);
+  expect(c.height).toBeCloseTo(0.5 / 5);
+  expect(c.lanes).toBe(1);
+  expect([c.done, c.now]).toEqual([false, true]); // 13:00–13:30 is ongoing
+  expect(v.items[1].allDay.map((e) => e.title)).toEqual(['Hel']);
+  expect(v.hours[0].label).toBe('09'); // 07:00Z = 09:00 Oslo
+  expect(v.hours.at(-1).frac).toBe(1);
+});
+
+test('calendarView: timeline clamps to 07–23 and keeps a 3h minimum span', () => {
+  const cal = { people: [{ name: 'V', events: [
+    // 21:00–24:00 local: end clipped at 23, span padded back to 20–23
+    { title: 'Sent', start: '2026-08-24T19:00:00.000Z', end: '2026-08-24T22:00:00.000Z', allDay: false },
+  ] }] };
+  const v = calendarView(ctx({ calendar: cal, now: monday('19:00') }));
+  const [e] = v.items[0].timed;
+  expect(v.hours[0].label).toBe('20');
+  expect(v.hours.at(-1).label).toBe('23');
+  expect(e.top).toBeCloseTo(1 / 3);
+  expect(e.height).toBeCloseTo(2 / 3); // 23–24 clipped away
 });
 
 test('calendarView with no relevant events has nothing to display', () => {

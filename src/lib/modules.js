@@ -2,9 +2,10 @@ import { activeReminder } from './reminders.js';
 
 export const hourOf = (d) => d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
 
-// One card per person: what's still ahead of them today; from 20:00 the view
-// switches to tomorrow's agenda (`tomorrow: true`). Empty items = nothing to
-// show = the module hides itself.
+// One column per person: a static view of the whole day (finished events stay,
+// marked `done`; ongoing ones marked `now`); from 20:00 the view switches to
+// tomorrow's agenda (`tomorrow: true`). Empty items = nothing to show = the
+// module hides itself.
 export function calendarView(ctx) {
   const now = ctx.now;
   const people = ctx.calendar?.people ?? [];
@@ -12,12 +13,65 @@ export function calendarView(ctx) {
   const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
   if (tomorrow) dayStart.setDate(dayStart.getDate() + 1);
   const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
-  const items = people.map((p) => ({
-    name: p.name,
-    events: p.events.filter((e) =>
-      new Date(e.start) >= dayStart && new Date(e.start) < dayEnd && new Date(e.end) > now),
-  }));
-  return { tomorrow, items: items.some((p) => p.events.length) ? items : [] };
+  const items = people.map((p) => {
+    const events = p.events.filter((e) =>
+      new Date(e.start) >= dayStart && new Date(e.start) < dayEnd);
+    return { name: p.name,
+             color: /^#[0-9a-f]{6}$/i.test(p.color ?? '') ? p.color : undefined, events,
+             allDay: events.filter((e) => e.allDay),
+             timed: lanes(events.filter((e) => !e.allDay)) };
+  });
+  if (!items.some((p) => p.events.length)) return { tomorrow, items: [], hours: [] };
+  // Shared timeline: hour-rounded span of everyone's timed events, clamped to
+  // 07–23, min 3h so a lone short event doesn't fill the whole card.
+  // ponytail: hour-rounding epoch ms assumes a whole-hour UTC offset (true for Oslo)
+  const HOUR = 3_600_000;
+  const timed = items.flatMap((p) => p.timed);
+  if (!timed.length) return { tomorrow, items, hours: [] };
+  const winStart = new Date(dayStart); winStart.setHours(7);
+  const winEnd = new Date(dayStart); winEnd.setHours(23);
+  const t0raw = Math.max(+winStart, Math.floor(Math.min(...timed.map((e) => e.ms)) / HOUR) * HOUR);
+  const t1 = Math.min(+winEnd, Math.ceil(Math.max(...timed.map((e) => e.msEnd)) / HOUR) * HOUR);
+  const t0 = Math.min(t0raw, Math.max(+winStart, t1 - 3 * HOUR));
+  const span = t1 - t0;
+  const clamp = (f) => Math.min(1, Math.max(0, f));
+  for (const e of timed) {
+    e.top = clamp((e.ms - t0) / span);
+    e.height = clamp((e.msEnd - t0) / span) - e.top;
+    e.done = e.msEnd <= +now;
+    e.now = e.ms <= +now && +now < e.msEnd;
+  }
+  const step = span / HOUR > 8 ? 2 : 1;
+  const hours = [];
+  for (let t = t0; t <= t1; t += step * HOUR)
+    hours.push({ label: String(new Date(t).getHours()).padStart(2, '0'), frac: (t - t0) / span });
+  return { tomorrow, items, hours };
+}
+
+// Side-by-side lanes for a person's own overlapping events: greedy lane
+// assignment; every event in a connected overlap cluster shares its lane count.
+function lanes(evs) {
+  const sorted = evs.map((e) => ({ ...e, ms: +new Date(e.start), msEnd: +new Date(e.end) }))
+    .sort((a, b) => a.ms - b.ms);
+  let cluster = [], clusterEnd = -Infinity;
+  const flush = () => {
+    const ends = [];
+    for (const e of cluster) {
+      let i = ends.findIndex((end) => end <= e.ms);
+      if (i === -1) i = ends.length;
+      ends[i] = e.msEnd;
+      e.lane = i;
+    }
+    for (const e of cluster) e.lanes = ends.length;
+    cluster = [];
+  };
+  for (const e of sorted) {
+    if (e.ms >= clusterEnd) flush();
+    cluster.push(e);
+    clusterEnd = Math.max(clusterEnd, e.msEnd);
+  }
+  flush();
+  return sorted;
 }
 
 // minHeight: the design's block heights. priority: what survives when space is
@@ -28,7 +82,7 @@ export const REGISTRY = {
   hourly:   { minHeight: 185, priority: 60,  flex: false, active: (c) => !!c.weather },
   reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
-  calendar: { minHeight: 215, priority: 70,  flex: false, active: (c) => calendarView(c).items.length > 0 },
+  calendar: { minHeight: 460, priority: 70,  flex: true,  active: (c) => calendarView(c).items.length > 0 },
 };
 
 const GAP = 36;
@@ -82,5 +136,12 @@ export function layoutModules(order, ctx, avail = 1776) {
       .map((r) => r.filter((m) => m.name !== toRemove.name))
       .filter((r) => r.length);
   }
+
+  // Flex modules learn the room they actually have: their row's budget plus an
+  // equal share of the leftover space. Photos uses this to size (and pick) images.
+  const flexRows = rows.filter((r) => r.some((m) => m.flex));
+  const share = flexRows.length ? Math.max(0, avail - total()) / flexRows.length : 0;
+  for (const r of flexRows) for (const m of r) m.maxHeight = Math.round(height(r) + share);
+
   return rows;
 }

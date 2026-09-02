@@ -9,7 +9,7 @@
   import { clock, weather, calendar, photos, cfg } from '$lib/data.svelte.js';
   import { layoutModules, hourOf } from '$lib/modules.js';
   import { calendarReminders } from '$lib/reminders.js';
-  import { skyAt, textColor, panelColor, rgb } from '$lib/sky.js';
+  import { themeAt } from '$lib/sky.js';
 
   const COMPONENTS = {
     clock: Clock, weather: CurrentWeather, hourly: HourlyStrip,
@@ -20,10 +20,7 @@
   const scale = $derived(Math.min(vw / 1080, vh / 1920));
 
   const h = $derived(hourOf(clock.now));
-  const cloud = $derived(weather.v?.current.cloud ?? 0.3);
-  const sky = $derived(skyAt(h, cloud));
-  const txt = $derived(textColor(h, cloud));
-  const panel = $derived(panelColor(h, cloud));
+  const theme = $derived(themeAt(h, weather.v));
 
   const ctx = $derived({
     weather: weather.v, calendar: calendar.v,
@@ -37,8 +34,8 @@
 <svelte:window bind:innerWidth={vw} bind:innerHeight={vh} />
 
 <div class="viewport">
-  <div class="stage" style="transform: scale({scale}); color: {txt}">
-    <div class="sky" style="background: linear-gradient(172deg, {rgb(sky[0])} 0%, {rgb(sky[1])} 52%, {rgb(sky[2])} 100%)"></div>
+  <div class="stage" style="transform: scale({scale}); color: {theme.text}">
+    <div class="sky" style="background: {theme.sky}"></div>
     <div class="content">
       {#each rows as row (row.map((m) => m.name).join())}
         <div class="mrow" class:grow={row.some((m) => m.flex)}
@@ -46,7 +43,7 @@
              transition:fade={{ duration: 1000 }}>
           {#each row as m (m.name)}
             {@const C = COMPONENTS[m.name]}
-            <C {panel} maxHeight={m.maxHeight ?? m.minHeight} />
+            <C panel={theme.panel} maxHeight={m.maxHeight ?? m.minHeight} />
           {/each}
         </div>
       {/each}
@@ -59,7 +56,7 @@
   .viewport { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
   .stage { width: 1080px; height: 1920px; flex: none; position: relative; overflow: hidden;
            font-family: 'Outfit', sans-serif; transition: color 2s; transform-origin: center; }
-  .sky { position: absolute; inset: 0; transition: background 30s linear; }
+  .sky { position: absolute; inset: 0; transition: background 2s; }
   .content { position: absolute; inset: 0; padding: 72px; display: flex; flex-direction: column;
              gap: 36px; box-sizing: border-box; }
   .mrow { display: flex; gap: 18px; justify-content: space-between; align-items: flex-start; }
@@ -67,5 +64,6 @@
      every later row to the bottom of the screen, leaving open sky above. */
   .mrow.grow { margin-top: auto; align-items: stretch; flex: none; }
   .mrow.grow ~ .mrow.grow { margin-top: 0; }
-  .mrow.grow > :global(*) { flex: 1; display: flex; flex-direction: column; }
+  /* Only sizing here — components own their internal display (Photos is a grid). */
+  .mrow.grow > :global(*) { flex: 1; }
 </style>

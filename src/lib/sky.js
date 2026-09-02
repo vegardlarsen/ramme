@@ -1,75 +1,31 @@
-export const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
-export const rgb = (c) => `rgb(${c.map(Math.round).join(',')})`;
-export const rgba4 = (c) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${c[3].toFixed(3)})`;
-
-// Sky keyframes from the design (docs/design/ambient-scene.jsx): [hour, top, mid, bottom]
-// ponytail: sunrise/sunset anchors are static (06:12 / 21:02); shift them from the
-// Sunrise API if winter screens look wrong.
-const SKY = [
-  [4.5,  [26, 32, 64],   [16, 20, 36],   [30, 20, 42]],
-  [6.2,  [120, 110, 160],[255, 200, 160],[210, 195, 210]],
-  [7.25, [255, 217, 188],[255, 243, 228],[207, 228, 242]],
-  [11.0, [221, 240, 251],[253, 254, 255],[244, 250, 254]],
-  [16.0, [200, 228, 246],[250, 250, 248],[255, 240, 222]],
-  [19.6, [150, 160, 200],[255, 190, 150],[240, 172, 140]],
-  [21.2, [70, 84, 130],  [58, 58, 98],   [88, 58, 88]],
-  [22.5, [38, 48, 79],   [20, 24, 40],   [36, 22, 41]],
-  [28.5, [26, 32, 64],   [16, 20, 36],   [30, 20, 42]],
-];
-const GREY = [205, 208, 212];
-
-export function skyAt(h, cloud) {
-  const x = h < SKY[0][0] ? h + 24 : h;
-  let a = SKY[0], b = SKY[SKY.length - 1];
-  for (let i = 0; i < SKY.length - 1; i++) {
-    if (x >= SKY[i][0] && x <= SKY[i + 1][0]) { a = SKY[i]; b = SKY[i + 1]; break; }
-  }
-  const t = (x - a[0]) / (b[0] - a[0]);
-  return [1, 2, 3].map((i) => mix(mix(a[i], b[i], t), GREY, cloud * 0.45));
-}
-
-export const TXT = { m: [58, 42, 32], d: [23, 52, 69], k: [241, 236, 250] };
-export const PAN = { m: [255, 255, 255, 0.5], d: [23, 52, 69, 0.06], k: [255, 255, 255, 0.08] };
-
-const smooth = (x, a, b) => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
+// Two fixed themes, switched by expected daylight: light between sunrise and
+// sunset (met.no sunrise API, already in the weather data), dark otherwise.
+export const THEMES = {
+  light: {
+    sky: 'linear-gradient(172deg, #ddf0fb 0%, #fdfeff 52%, #f4fafe 100%)',
+    text: 'rgb(23,52,69)',
+    panel: 'rgba(23,52,69,0.06)',
+  },
+  dark: {
+    sky: 'linear-gradient(172deg, #1a2040 0%, #101424 52%, #1e142a 100%)',
+    text: 'rgb(241,236,250)',
+    panel: 'rgba(255,255,255,0.08)',
+  },
 };
 
-// Layered like the mockup: evening overrides day overrides morning, so the
-// small hours (pDag=0, pKveld=1) resolve to evening colors with no special case.
-export function phaseWeights(h) {
-  const pDag = smooth(h, 8.3, 9.5);
-  const pKveld = h >= 12 ? smooth(h, 19.5, 21.2) : 1 - smooth(h, 4.5, 6.5);
-  return { pDag, pKveld };
+const toH = (hhmm, fallback) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm ?? '');
+  return m ? +m[1] + +m[2] / 60 : fallback;
+};
+
+// ponytail: hard flip at sunrise/sunset, softened only by the page's CSS
+// transition; add a twilight offset (e.g. ±30 min) if the flip feels abrupt.
+export function isDaylight(h, weather) {
+  return h >= toH(weather?.sunrise, 7) && h < toH(weather?.sunset, 21);
 }
+
+export const themeAt = (h, weather) => THEMES[isDaylight(h, weather) ? 'light' : 'dark'];
 
 export function mode(h) {
   return h < 4.5 || h >= 19.5 ? 'evening' : h < 9 ? 'morning' : 'day';
-}
-
-// Mean relative luminance (0-1) of the three sky gradient stops.
-export function skyLuminance(sky) {
-  const lum = ([r, g, b]) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-  return (lum(sky[0]) + lum(sky[1]) + lum(sky[2])) / 3;
-}
-
-// Dark vs light text is decided by what the sky actually looks like, not by
-// the clock — and the flip is binary: any blend reads as mud on a dusk sky.
-// Equal contrast sits at luminance ~0.23; 0.30 biases slightly toward light
-// text so overcast nights (grey-lifted to ~0.26) stay light. Both choices
-// give ~3:1 near the flip, and the page's 2s CSS transition softens it.
-function lightness(h, cloud) {
-  const pLight = skyLuminance(skyAt(h, cloud)) < 0.3 ? 1 : 0;
-  return { pDag: phaseWeights(h).pDag, pLight };
-}
-
-export function textColor(h, cloud = 0) {
-  const { pDag, pLight } = lightness(h, cloud);
-  return rgb(mix(mix(TXT.m, TXT.d, pDag), TXT.k, pLight));
-}
-
-export function panelColor(h, cloud = 0) {
-  const { pDag, pLight } = lightness(h, cloud);
-  return rgba4(mix(mix(PAN.m, PAN.d, pDag), PAN.k, pLight));
 }
