@@ -1,4 +1,4 @@
-const UA = 'mat-signage/1.0 vegard@beat.no';
+const UA = 'ramme-signage/1.0 vegard@beat.no';
 
 const TEXT_NO = {
   clearsky: 'klart', fair: 'lettskyet', partlycloudy: 'delvis skyet', cloudy: 'skyet',

@@ -1,11 +1,11 @@
 [Unit]
-Description=mat ambient signage server
+Description=ramme ambient signage server
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 User=pi
-WorkingDirectory=/home/pi/mat
+WorkingDirectory=/home/pi/ramme
 ExecStart=/usr/bin/node build/index.js
 Environment=PORT=3000
 Environment=HOST=127.0.0.1

@@ -1,4 +1,4 @@
-# mat — ambient home signage
+# ramme — ambient home signage
 
 Full-screen 1080×1920 family dashboard built from ordered, toggleable modules:
 weather (yr.no), calendars (iCal), reminders, iCloud photos, with a sky
@@ -61,15 +61,15 @@ deadline shows.
    ```
 2. Get the app onto the Pi and build it:
    ```sh
-   git clone <this-repo> /home/pi/mat
-   cd /home/pi/mat
+   git clone <this-repo> /home/pi/ramme
+   cd /home/pi/ramme
    cp config.example.json config.json && nano config.json
    npm ci && npm run build
    ```
 3. Server as a service:
    ```sh
-   sudo cp deploy/mat-signage.service /etc/systemd/system/
-   sudo systemctl enable --now mat-signage
+   sudo cp deploy/ramme-signage.service /etc/systemd/system/
+   sudo systemctl enable --now ramme-signage
    curl -s localhost:3000/api/weather | head -c 200   # sanity check
    ```
 4. Kiosk: enable desktop autologin (`sudo raspi-config` → System → Boot/Auto Login →
@@ -83,11 +83,29 @@ deadline shows.
    Screen Blanking → No.
 5. Reboot. The Pi boots into the dashboard.
 
+### Variant: Raspberry Pi OS Lite (no desktop)
+
+Runs the browser under [cage](https://github.com/cage-kiosk/cage), a Wayland
+compositor that shows exactly one full-screen app — no desktop session at all.
+Steps 1–3 above are the same; instead of steps 4–5:
+
+```sh
+sudo apt-get install -y cage chromium-browser
+sudo cp deploy/ramme-kiosk.service /etc/systemd/system/
+sudo systemctl enable ramme-kiosk
+sudo reboot
+```
+
+The unit takes over tty1 (`Conflicts=getty@tty1.service`), so no autologin
+setup is needed, and there is nothing to blank the screen. Portrait rotation
+happens inside the unit via `wlr-randr`; as with the desktop variant, adjust
+the `--output` name in `deploy/ramme-kiosk.service` if it isn't `HDMI-A-1`.
+
 Caveats: these steps assume the browser binary is `chromium-browser` and the user
 account is `pi`, both true on older Raspberry Pi OS images. Newer images may install
 it as `chromium` instead — check with `command -v chromium chromium-browser` and
-adjust `deploy/kiosk-autostart` accordingly. If the first-boot wizard created a
-different username, adjust `User=` in `deploy/mat-signage.service` and the
-`/home/pi/mat` paths above to match.
+adjust `deploy/kiosk-autostart` or `deploy/ramme-kiosk.service` accordingly. If
+the first-boot wizard created a different username, adjust `User=` in the
+`deploy/*.service` units and the `/home/pi/ramme` paths above to match.
 
-Updating: `cd /home/pi/mat && git pull && npm ci && npm run build && sudo systemctl restart mat-signage`.
+Updating: `cd /home/pi/ramme && git pull && npm ci && npm run build && sudo systemctl restart ramme-signage`.
