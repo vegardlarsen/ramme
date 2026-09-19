@@ -17,6 +17,7 @@ export const weather = poll('/api/weather', 15 * 60_000);
 export const nowcast = poll('/api/nowcast', 5 * 60_000);
 export const calendar = poll('/api/calendar', 5 * 60_000);
 export const photos = poll('/api/photos', 60 * 60_000);
+export const departures = poll('/api/departures', 60_000);
 export const cfg = poll('/api/config', 60 * 60_000);
 
 const tOverride = new URLSearchParams(location.search).get('t'); // "?t=HH:MM" freezes the clock for previewing phases
