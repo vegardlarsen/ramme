@@ -1,6 +1,9 @@
 [Unit]
 Description=ramme kiosk browser (cage)
-After=ramme-signage.service
+# The session orderings matter: PAM refuses logins before systemd-user-sessions
+# is up (cage then loses the seat and aborts), and Conflicts alone doesn't stop
+# getty before we grab the tty.
+After=ramme-signage.service systemd-user-sessions.service getty@tty1.service
 Wants=ramme-signage.service
 Conflicts=getty@tty1.service
 
@@ -10,6 +13,9 @@ User=pi
 PAMName=login
 TTYPath=/dev/tty1
 StandardInput=tty
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
 ExecStart=/usr/bin/cage -- /bin/sh -c 'wlr-randr --output HDMI-A-1 --transform 270; exec "$$(command -v chromium chromium-browser | head -n1)" --kiosk --noerrdialogs --disable-session-crashed-bubble --disable-features=TranslateUI --check-for-update-interval=31536000 http://localhost:3000'
 Restart=always
 RestartSec=5
