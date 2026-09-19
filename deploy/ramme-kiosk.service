@@ -9,7 +9,7 @@ User=pi
 PAMName=login
 TTYPath=/dev/tty1
 StandardInput=tty
-ExecStart=/usr/bin/cage -- /bin/sh -c 'wlr-randr --output HDMI-A-1 --transform 90; exec "$$(command -v chromium chromium-browser | head -n1)" --kiosk --noerrdialogs --disable-session-crashed-bubble --disable-features=TranslateUI --check-for-update-interval=31536000 http://localhost:3000'
+ExecStart=/usr/bin/cage -- /bin/sh -c 'wlr-randr --output HDMI-A-1 --transform 270; exec "$$(command -v chromium chromium-browser | head -n1)" --kiosk --noerrdialogs --disable-session-crashed-bubble --disable-features=TranslateUI --check-for-update-interval=31536000 http://localhost:3000'
 Restart=always
 RestartSec=5
 

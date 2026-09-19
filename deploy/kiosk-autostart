@@ -1,5 +1,5 @@
 # Rotate to portrait (adjust output name to `wlr-randr` listing) and disable blanking
-wlr-randr --output HDMI-A-1 --transform 90 &
+wlr-randr --output HDMI-A-1 --transform 270 &
 # Kiosk browser; crash bubbles and update prompts suppressed
 "$(command -v chromium chromium-browser | head -n1)" --kiosk --noerrdialogs --disable-session-crashed-bubble \
   --disable-features=TranslateUI --check-for-update-interval=31536000 \
