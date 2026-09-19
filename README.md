@@ -92,7 +92,7 @@ compositor that shows exactly one full-screen app — no desktop session at all.
 Steps 1–3 above are the same; instead of steps 4–5:
 
 ```sh
-sudo apt-get install -y cage chromium-browser || sudo apt-get install -y cage chromium
+sudo apt-get install -y cage wlr-randr chromium-browser || sudo apt-get install -y cage wlr-randr chromium
 sudo cp deploy/ramme-kiosk.service /etc/systemd/system/
 sudo systemctl enable ramme-kiosk
 sudo reboot
