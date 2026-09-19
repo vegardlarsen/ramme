@@ -116,4 +116,4 @@ install commands above substitute whatever user runs them, so any username the
 OS installer created works — just run the install as that user, with the repo
 cloned at `~/ramme`.
 
-Updating: `cd ~/ramme && git pull && npm ci && npm run build && sudo systemctl restart ramme-signage`.
+Updating: `~/ramme/update.sh` (pulls, rebuilds, restarts both services).
