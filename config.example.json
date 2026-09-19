@@ -4,7 +4,8 @@
   "modules": [
     [
       "clock",
-      "weather"
+      "weather",
+      "nowcast"
     ],
     "hourly",
     "reminder",

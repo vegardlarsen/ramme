@@ -74,12 +74,29 @@ function lanes(evs) {
   return sorted;
 }
 
+const rainAhead = (c) => (c.nowcast ?? []).some((p) => p.mm > 0);
+
+// One line the kiosk viewer actually needs: when does the rain stop or start?
+// Points are 5-minute steps starting now; '' = no useful headline.
+export function nowcastHeadline(pts) {
+  if (!pts?.length) return '';
+  if (pts[0].mm > 0) {
+    let i = pts.length;
+    while (i > 0 && pts[i - 1].mm === 0) i--;
+    return i < pts.length ? `opphold om ca. ${i * 5} min` : '';
+  }
+  const start = pts.findIndex((p) => p.mm > 0);
+  return start > 0 ? `regn om ca. ${start * 5} min` : '';
+}
+
 // minHeight: the design's block heights. priority: what survives when space is
 // tight (higher = kept). flex: fills leftover vertical space when rendered.
 export const REGISTRY = {
   clock:    { minHeight: 270, priority: 100, flex: false, active: () => true },
-  weather:  { minHeight: 270, priority: 80,  flex: false, active: (c) => !!c.weather },
+  // nowcast swaps in for the weather widget while rain is on the radar
+  weather:  { minHeight: 270, priority: 80,  flex: false, active: (c) => !!c.weather && !rainAhead(c) },
   hourly:   { minHeight: 185, priority: 60,  flex: false, active: (c) => !!c.weather },
+  nowcast:  { minHeight: 270, priority: 80,  flex: false, active: rainAhead },
   reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
   calendar: { minHeight: 460, priority: 70,  flex: true,  active: (c) => calendarView(c).items.length > 0 },

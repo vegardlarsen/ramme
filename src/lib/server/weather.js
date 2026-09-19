@@ -58,6 +58,20 @@ export function normalizeWeather(forecast, sun) {
   };
 }
 
+export const normalizeNowcast = (data) =>
+  data.properties.timeseries.map((t) => ({
+    time: t.time,
+    mm: t.data.instant.details.precipitation_rate ?? 0, // mm/h, 5-min steps
+  }));
+
+export async function fetchNowcast(lat, lon) {
+  const res = await fetch(
+    `https://api.met.no/weatherapi/nowcast/2.0/complete?lat=${lat}&lon=${lon}`,
+    { headers: { 'User-Agent': UA } });
+  if (!res.ok) return []; // 422 = outside Nordic radar coverage
+  return normalizeNowcast(await res.json());
+}
+
 export async function fetchWeather(lat, lon) {
   const get = async (url) => {
     const res = await fetch(url, { headers: { 'User-Agent': UA } });

@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { layoutModules, calendarView, REGISTRY } from '../src/lib/modules.js';
+import { layoutModules, calendarView, nowcastHeadline, REGISTRY } from '../src/lib/modules.js';
 
 const monday = (hhmm) => new Date(`2026-08-24T${hhmm}:00`); // Monday, local
 // active Monday ~05:30-08:00 local (Europe/Oslo)
@@ -138,4 +138,13 @@ test('a side-by-side module that frees no space is not dropped', () => {
   const names = rows.flat().map((m) => m.name);
   expect(names).toContain('weather'); // kept: removing it saves 0px next to taller clock
   expect(names).not.toContain('reminder');
+});
+
+test('nowcastHeadline: stopping, starting, steady, dry', () => {
+  const p = (...mms) => mms.map((mm) => ({ mm }));
+  expect(nowcastHeadline(p(1, 1, 0.4, 0, 0, 0))).toBe('opphold om ca. 15 min');
+  expect(nowcastHeadline(p(0, 0, 0, 0.8, 1))).toBe('regn om ca. 15 min');
+  expect(nowcastHeadline(p(1, 1, 1))).toBe('');
+  expect(nowcastHeadline(p(0, 0, 0))).toBe('');
+  expect(nowcastHeadline([])).toBe('');
 });

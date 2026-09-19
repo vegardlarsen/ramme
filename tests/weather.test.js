@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest';
 import { readdirSync } from 'node:fs';
-import { normalizeWeather } from '../src/lib/server/weather.js';
+import { normalizeWeather, normalizeNowcast } from '../src/lib/server/weather.js';
 
 const entry = (time, temp, cloud, symbol, precip = 0) => ({
   time,
@@ -46,4 +46,15 @@ test('rain boosts cloud for sky desaturation', () => {
     ...forecast.properties.timeseries.slice(1),
   ] } };
   expect(normalizeWeather(rainy, sun).current.cloud).toBeGreaterThanOrEqual(0.8);
+});
+
+test('normalizeNowcast maps precipitation rate, missing -> 0', () => {
+  const nc = { properties: { timeseries: [
+    { time: '2026-08-24T12:00:00Z', data: { instant: { details: { precipitation_rate: 1.4 } } } },
+    { time: '2026-08-24T12:05:00Z', data: { instant: { details: {} } } },
+  ] } };
+  expect(normalizeNowcast(nc)).toEqual([
+    { time: '2026-08-24T12:00:00Z', mm: 1.4 },
+    { time: '2026-08-24T12:05:00Z', mm: 0 },
+  ]);
 });

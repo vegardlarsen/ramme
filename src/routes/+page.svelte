@@ -3,16 +3,17 @@
   import Clock from '$lib/ui/Clock.svelte';
   import CurrentWeather from '$lib/ui/CurrentWeather.svelte';
   import HourlyStrip from '$lib/ui/HourlyStrip.svelte';
+  import Nowcast from '$lib/ui/Nowcast.svelte';
   import Reminder from '$lib/ui/Reminder.svelte';
   import Photos from '$lib/ui/Photos.svelte';
   import Calendar from '$lib/ui/Calendar.svelte';
-  import { clock, weather, calendar, photos, cfg } from '$lib/data.svelte.js';
+  import { clock, weather, nowcast, calendar, photos, cfg } from '$lib/data.svelte.js';
   import { layoutModules, hourOf } from '$lib/modules.js';
   import { calendarReminders } from '$lib/reminders.js';
   import { themeAt } from '$lib/sky.js';
 
   const COMPONENTS = {
-    clock: Clock, weather: CurrentWeather, hourly: HourlyStrip,
+    clock: Clock, weather: CurrentWeather, hourly: HourlyStrip, nowcast: Nowcast,
     reminder: Reminder, photos: Photos, calendar: Calendar,
   };
 
@@ -23,7 +24,7 @@
   const theme = $derived(themeAt(h, weather.v));
 
   const ctx = $derived({
-    weather: weather.v, calendar: calendar.v,
+    weather: weather.v, nowcast: nowcast.v, calendar: calendar.v,
     photos: photos.v?.photos ?? [],
     reminders: calendarReminders(calendar.v),
     now: clock.now,
