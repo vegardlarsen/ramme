@@ -92,7 +92,7 @@ compositor that shows exactly one full-screen app — no desktop session at all.
 Steps 1–3 above are the same; instead of steps 4–5:
 
 ```sh
-sudo apt-get install -y cage chromium-browser
+sudo apt-get install -y cage chromium-browser || sudo apt-get install -y cage chromium
 sudo cp deploy/ramme-kiosk.service /etc/systemd/system/
 sudo systemctl enable ramme-kiosk
 sudo reboot
@@ -103,11 +103,10 @@ setup is needed, and there is nothing to blank the screen. Portrait rotation
 happens inside the unit via `wlr-randr`; as with the desktop variant, adjust
 the `--output` name in `deploy/ramme-kiosk.service` if it isn't `HDMI-A-1`.
 
-Caveats: these steps assume the browser binary is `chromium-browser` and the user
-account is `pi`, both true on older Raspberry Pi OS images. Newer images may install
-it as `chromium` instead — check with `command -v chromium chromium-browser` and
-adjust `deploy/kiosk-autostart` or `deploy/ramme-kiosk.service` accordingly. If
-the first-boot wizard created a different username, adjust `User=` in the
-`deploy/*.service` units and the `/home/pi/ramme` paths above to match.
+Caveats: the kiosk files find the browser whether it is installed as `chromium`
+or `chromium-browser` (the name changed between Raspberry Pi OS releases). These
+steps assume the user account is `pi`; if the first-boot wizard created a
+different username, adjust `User=` in the `deploy/*.service` units and the
+`/home/pi/ramme` paths above to match.
 
 Updating: `cd /home/pi/ramme && git pull && npm ci && npm run build && sudo systemctl restart ramme-signage`.
