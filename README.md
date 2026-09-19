@@ -28,6 +28,11 @@ Preview any time of day with `?t=HH:MM`, e.g. `http://localhost:5173/?t=21:00`.
   the lowest-priority modules (photos first) are dropped.
 - `people[].feeds[]` — one or more iCal URLs per person; `label` ("jobb"/"privat")
   is shown on non-private events
+- `brightness` — optional screen-brightness schedule, `"HH:MM": percent`; each
+  level holds until the next entry (wrapping past midnight), and `0` puts the
+  monitor in standby until the next non-zero entry. Applied via
+  `ddcutil` over DDC/CI, so it needs `ddcutil` installed, the `i2c-dev` kernel
+  module loaded, and passwordless sudo on the Pi; omit to disable
 - `icloudAlbumToken` — the part after `#` in an iCloud shared-album link
   (`https://www.icloud.com/sharedalbum/#B0xxxx` → `B0xxxx`); empty disables photos
 - `photoIntervalMinutes` — how long each photo stays on screen (default 60)
