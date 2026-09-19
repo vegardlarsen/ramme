@@ -4,6 +4,7 @@ After=ramme-signage.service
 Wants=ramme-signage.service
 Conflicts=getty@tty1.service
 
+# `pi` is a placeholder; the README's install command substitutes your username.
 [Service]
 User=pi
 PAMName=login

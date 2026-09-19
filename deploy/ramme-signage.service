@@ -3,6 +3,7 @@ Description=ramme ambient signage server
 After=network-online.target
 Wants=network-online.target
 
+# `pi` is a placeholder; the README's install command substitutes your username.
 [Service]
 User=pi
 WorkingDirectory=/home/pi/ramme

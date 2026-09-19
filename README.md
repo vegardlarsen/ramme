@@ -63,14 +63,14 @@ deadline shows.
    ```
 2. Get the app onto the Pi and build it:
    ```sh
-   git clone https://github.com/vegardlarsen/ramme.git /home/pi/ramme
-   cd /home/pi/ramme
+   git clone https://github.com/vegardlarsen/ramme.git ~/ramme
+   cd ~/ramme
    cp config.example.json config.json && nano config.json
    npm ci && npm run build
    ```
 3. Server as a service:
    ```sh
-   sudo cp deploy/ramme-signage.service /etc/systemd/system/
+   sed "s|/home/pi|$HOME|; s|^User=pi|User=$USER|" deploy/ramme-signage.service | sudo tee /etc/systemd/system/ramme-signage.service >/dev/null
    sudo systemctl enable --now ramme-signage
    curl -s localhost:3000/api/weather | head -c 200   # sanity check
    ```
@@ -93,7 +93,7 @@ Steps 1–3 above are the same; instead of steps 4–5:
 
 ```sh
 sudo apt-get install -y cage wlr-randr chromium-browser || sudo apt-get install -y cage wlr-randr chromium
-sudo cp deploy/ramme-kiosk.service /etc/systemd/system/
+sed "s|^User=pi|User=$USER|" deploy/ramme-kiosk.service | sudo tee /etc/systemd/system/ramme-kiosk.service >/dev/null
 sudo cp deploy/99-ramme-no-pointer.rules /etc/udev/rules.d/   # no mouse -> no cursor
 sudo systemctl enable ramme-kiosk
 sudo reboot
@@ -105,9 +105,10 @@ happens inside the unit via `wlr-randr`; as with the desktop variant, adjust
 the `--output` name in `deploy/ramme-kiosk.service` if it isn't `HDMI-A-1`.
 
 Caveats: the kiosk files find the browser whether it is installed as `chromium`
-or `chromium-browser` (the name changed between Raspberry Pi OS releases). These
-steps assume the user account is `pi`; if the first-boot wizard created a
-different username, adjust `User=` in the `deploy/*.service` units and the
-`/home/pi/ramme` paths above to match.
+or `chromium-browser` (the name changed between Raspberry Pi OS releases). The
+service files ship with `pi` as a placeholder username; the `sed | sudo tee`
+install commands above substitute whatever user runs them, so any username the
+OS installer created works — just run the install as that user, with the repo
+cloned at `~/ramme`.
 
-Updating: `cd /home/pi/ramme && git pull && npm ci && npm run build && sudo systemctl restart ramme-signage`.
+Updating: `cd ~/ramme && git pull && npm ci && npm run build && sudo systemctl restart ramme-signage`.
