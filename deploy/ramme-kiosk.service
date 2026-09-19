@@ -13,6 +13,9 @@ User=pi
 PAMName=login
 TTYPath=/dev/tty1
 StandardInput=tty
+# The no-pointer udev rule (and an unplugged keyboard) can leave zero input
+# devices; without this, wlroots refuses to start and cage aborts.
+Environment=WLR_LIBINPUT_NO_DEVICES=1
 TTYReset=yes
 TTYVHangup=yes
 TTYVTDisallocate=yes
