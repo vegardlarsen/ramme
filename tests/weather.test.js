@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest';
 import { readdirSync } from 'node:fs';
-import { normalizeWeather, normalizeNowcast } from '../src/lib/server/weather.js';
+import { normalizeWeather, normalizeNowcast, fetchNowcast } from '../src/lib/server/weather.js';
 
 const entry = (time, temp, cloud, symbol, precip = 0) => ({
   time,
@@ -57,4 +57,14 @@ test('normalizeNowcast maps precipitation rate, missing -> 0', () => {
     { time: '2026-08-24T12:00:00Z', mm: 1.4 },
     { time: '2026-08-24T12:05:00Z', mm: 0 },
   ]);
+});
+
+test('fetchNowcast: 422 means no data, transient errors throw (cache serves stale)', async () => {
+  const orig = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({ ok: false, status: 422 });
+    expect(await fetchNowcast(60, 5)).toEqual([]);
+    globalThis.fetch = async () => ({ ok: false, status: 503 });
+    await expect(fetchNowcast(60, 5)).rejects.toThrow('503');
+  } finally { globalThis.fetch = orig; }
 });

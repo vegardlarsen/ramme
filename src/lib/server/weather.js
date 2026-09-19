@@ -68,7 +68,8 @@ export async function fetchNowcast(lat, lon) {
   const res = await fetch(
     `https://api.met.no/weatherapi/nowcast/2.0/complete?lat=${lat}&lon=${lon}`,
     { headers: { 'User-Agent': UA } });
-  if (!res.ok) return []; // 422 = outside Nordic radar coverage
+  if (res.status === 422) return []; // outside Nordic radar coverage: truly no data
+  if (!res.ok) throw new Error(`nowcast -> ${res.status}`); // transient: let cached() serve stale
   return normalizeNowcast(await res.json());
 }
 
