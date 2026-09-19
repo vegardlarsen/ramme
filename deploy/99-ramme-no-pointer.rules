@@ -1,0 +1,8 @@
+# The kiosk takes no pointer input, but phantom pointer devices (keyboards with
+# media keys, CEC, some dongles) make cage draw a cursor — see
+# https://github.com/cage-kiosk/cage/issues/524. Have libinput ignore every
+# pointer device, so no cursor exists at all. Remove this file (and reboot)
+# if you ever need a mouse on the device.
+ACTION=="add|change", SUBSYSTEM=="input", ENV{ID_INPUT_MOUSE}=="1", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+ACTION=="add|change", SUBSYSTEM=="input", ENV{ID_INPUT_TOUCHPAD}=="1", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+ACTION=="add|change", SUBSYSTEM=="input", ENV{ID_INPUT_POINTINGSTICK}=="1", ENV{LIBINPUT_IGNORE_DEVICE}="1"

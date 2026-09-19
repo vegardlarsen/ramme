@@ -94,6 +94,7 @@ Steps 1–3 above are the same; instead of steps 4–5:
 ```sh
 sudo apt-get install -y cage wlr-randr chromium-browser || sudo apt-get install -y cage wlr-randr chromium
 sudo cp deploy/ramme-kiosk.service /etc/systemd/system/
+sudo cp deploy/99-ramme-no-pointer.rules /etc/udev/rules.d/   # no mouse -> no cursor
 sudo systemctl enable ramme-kiosk
 sudo reboot
 ```
