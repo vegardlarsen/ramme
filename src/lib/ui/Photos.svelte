@@ -17,31 +17,41 @@
     return pool[Math.floor(+clock.now / ms) % pool.length];
   });
 
+  // Crossfade only once the incoming image has loaded, so it never fades in blank.
+  let shown = $state(null);
+  $effect(() => {
+    const p = photo;
+    if (!p || shown?.url === p.url) { if (!p) shown = null; return; }
+    const img = new Image();
+    img.onload = () => { if (photo?.url === p.url) shown = p; };
+    img.src = p.url;
+  });
+
   // Shown at its true aspect: full width if that fits the room, else height-
   // capped (portraits), centered horizontally.
   const dims = $derived.by(() => {
-    if (!photo) return null;
-    const a = photo.aspect ?? 1.5;
+    if (!shown) return null;
+    const a = shown.aspect ?? 1.5;
     const h = Math.min(maxHeight, W / a);
     return { w: Math.round(h * a), h: Math.round(h) };
   });
 
   const caption = $derived.by(() => {
-    if (!photo) return '';
-    const when = photo.takenAt
-      ? new Date(photo.takenAt).toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' })
+    if (!shown) return '';
+    const when = shown.takenAt
+      ? new Date(shown.takenAt).toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' })
       : '';
-    return [photo.caption, when && when[0].toUpperCase() + when.slice(1)]
+    return [shown.caption, when && when[0].toUpperCase() + when.slice(1)]
       .filter(Boolean).join(' · ');
   });
 </script>
 
-{#if photo}
+{#if shown}
   <div class="frame">
-    {#key photo.url}
+    {#key shown.url}
       <div class="ph" style="width: {dims.w}px; height: {dims.h}px"
            in:fade={{ duration: 1500 }} out:fade={{ duration: 1500 }}>
-        <img src={photo.url} alt="" />
+        <img src={shown.url} alt="" />
         {#if caption}
           <div class="credit">{caption}</div>
         {/if}
@@ -53,7 +63,9 @@
 <style>
   /* Single grid cell so crossfading photos overlap; bottom-anchored like the stack. */
   .frame { flex: 1; display: grid; place-items: end center; }
-  .ph { grid-area: 1 / 1; position: relative; }
+  /* ponytail: width/height animation is layout work each frame — if the Pi
+     drops frames, delete this line and let the crossfade absorb size changes. */
+  .ph { grid-area: 1 / 1; position: relative; transition: width 800ms ease, height 800ms ease; }
   img { width: 100%; height: 100%; object-fit: cover; border-radius: 44px; display: block; }
   .credit { position: absolute; left: 36px; bottom: 30px; font-size: 20px; color: rgba(255,255,255,0.85); text-shadow: 0 1px 8px rgba(0,0,0,0.5); }
 </style>
