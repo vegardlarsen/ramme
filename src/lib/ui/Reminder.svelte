@@ -1,16 +1,17 @@
 <script>
-  import { clock, calendar, weather } from '$lib/data.svelte.js';
-  import { activeReminder, calendarReminders } from '$lib/reminders.js';
+  import { clock, calendar, departures, weather } from '$lib/data.svelte.js';
+  import { activeReminder, allReminders } from '$lib/reminders.js';
   import { hourOf } from '$lib/modules.js';
   import { isDaylight } from '$lib/sky.js';
 
-  const r = $derived(activeReminder(calendarReminders(calendar.v), clock.now));
+  const r = $derived(activeReminder(allReminders(calendar.v, departures.v, clock.now), clock.now));
   const evening = $derived(!isDaylight(hourOf(clock.now), weather.v));
   const hhmm = (iso) => new Date(iso).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
+  // Transit deviations carry their own label; for calendar reminders it's
   // "I kveld" the day before, "Før HH:MM" once the event's day arrives.
-  const label = $derived(!r ? '' :
+  const label = $derived(!r ? '' : r.label ?? (
     new Date(r.startAt).toDateString() === clock.now.toDateString()
-      ? `Før ${hhmm(r.startAt)}` : 'I kveld');
+      ? `Før ${hhmm(r.startAt)}` : 'I kveld'));
 </script>
 
 {#if r}

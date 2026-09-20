@@ -10,8 +10,7 @@
     "hourly",
     "reminder",
     "photos",
-    "calendar",
-    "departures"
+    "calendar"
   ],
   "people": [
     {
@@ -41,18 +40,11 @@
   ],
   "departures": [
     {
-      "label": "Mjåtveitflaten",
-      "stop": "NSR:StopPlace:33713",
-      "lines": ["SKY:Line:300", "SKY:Line:310"],
-      "withinHours": 2
-    },
-    {
       "label": "Båt til Bergen",
       "stop": "NSR:StopPlace:33723",
       "lines": ["SKY:Line:390"],
       "destination": "Strandkaiterminalen",
-      "count": 2,
-      "alert": true
+      "count": 2
     }
   ],
   "brightness": {

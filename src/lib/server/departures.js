@@ -26,7 +26,7 @@ export function normalizeDepartures(data, groups, now = Date.now()) {
       .flatMap((c) => [...c.situations, ...c.serviceJourney.line.situations])
       .map((s) => noText(s.summary)).filter(Boolean))];
     return {
-      label: g.label, alert: !!g.alert, situations,
+      label: g.label, situations,
       calls: calls.map((c) => ({
         aimed: c.aimedDepartureTime, expected: c.expectedDepartureTime,
         cancelled: c.cancellation, realtime: c.realtime,

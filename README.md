@@ -23,8 +23,7 @@ Preview any time of day with `?t=HH:MM`, e.g. `http://localhost:5173/?t=21:00`.
 - `lat`/`lon` — forecast position
 - `modules` — enabled modules in top-to-bottom screen order; remove an entry to
   disable it; a nested array (e.g. `["clock", "weather"]`) is one side-by-side
-  row. Available: `clock`, `weather`, `hourly`, `reminder`, `photos`, `calendar`,
-  `departures`.
+  row. Available: `clock`, `weather`, `hourly`, `reminder`, `photos`, `calendar`.
   A module with nothing to show hides itself; when everything doesn't fit,
   the lowest-priority modules (photos first) are dropped.
 - `people[].feeds[]` — one or more iCal URLs per person; `label` ("jobb"/"privat")
@@ -34,15 +33,14 @@ Preview any time of day with `?t=HH:MM`, e.g. `http://localhost:5173/?t=21:00`.
   monitor in standby until the next non-zero entry. Applied via
   `ddcutil` over DDC/CI, so it needs `ddcutil` installed, the `i2c-dev` kernel
   module loaded, and passwordless sudo on the Pi; omit to disable
-- `departures` — public-transport departure groups (Entur realtime, no API
-  key), shown as one thin footer line. Per group: `label`, `stop` (NSR stop
-  place id — find it via `https://api.entur.io/geocoder/v1/autocomplete?text=...`),
+- `departures` — public-transport groups watched for deviations (Entur
+  realtime, no API key). No timetable is shown; a disruption notice or a
+  cancelled upcoming departure raises a card in the reminder area (overline
+  "Avvik", title = `label`). Per group: `label`, `stop` (NSR stop place id —
+  find it via `https://api.entur.io/geocoder/v1/autocomplete?text=...`),
   `lines` (Entur line ids to whitelist), optional `destination` (keep only
-  departures with this front text, e.g. one direction of a boat), `count`
-  (times shown, default 3), `withinHours` (hide departures further out),
-  and `alert: true` — disruption notices for this group expand the strip
-  with the message and an accent border. Delays show in the accent color,
-  cancellations struck through; omit the key to disable
+  departures with this front text, e.g. one direction of a boat) and `count`
+  (upcoming departures checked for cancellation, default 3); omit to disable
 - `icloudAlbumToken` — the part after `#` in an iCloud shared-album link
   (`https://www.icloud.com/sharedalbum/#B0xxxx` → `B0xxxx`); empty disables photos
 - `photoIntervalMinutes` — how long each photo stays on screen (default 60)

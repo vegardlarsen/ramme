@@ -100,8 +100,6 @@ export const REGISTRY = {
   reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
   calendar: { minHeight: 460, priority: 70,  flex: true,  active: (c) => calendarView(c).items.length > 0 },
-  departures: { minHeight: 70, priority: 95, flex: false,
-    active: (c) => (c.departures ?? []).some((g) => g.calls.length || (g.alert && g.situations.length)) },
 };
 
 const GAP = 36;

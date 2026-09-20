@@ -7,15 +7,14 @@
   import Reminder from '$lib/ui/Reminder.svelte';
   import Photos from '$lib/ui/Photos.svelte';
   import Calendar from '$lib/ui/Calendar.svelte';
-  import Departures from '$lib/ui/Departures.svelte';
   import { clock, weather, nowcast, calendar, photos, departures, cfg } from '$lib/data.svelte.js';
   import { layoutModules, hourOf } from '$lib/modules.js';
-  import { calendarReminders } from '$lib/reminders.js';
+  import { allReminders } from '$lib/reminders.js';
   import { themeAt } from '$lib/sky.js';
 
   const COMPONENTS = {
     clock: Clock, weather: CurrentWeather, hourly: HourlyStrip, nowcast: Nowcast,
-    reminder: Reminder, photos: Photos, calendar: Calendar, departures: Departures,
+    reminder: Reminder, photos: Photos, calendar: Calendar,
   };
 
   let vw = $state(1080), vh = $state(1920);
@@ -27,8 +26,7 @@
   const ctx = $derived({
     weather: weather.v, nowcast: nowcast.v, calendar: calendar.v,
     photos: photos.v?.photos ?? [],
-    departures: departures.v ?? [],
-    reminders: calendarReminders(calendar.v),
+    reminders: allReminders(calendar.v, departures.v, clock.now),
     now: clock.now,
   });
   const rows = $derived(layoutModules(cfg.v?.modules ?? [], ctx));
