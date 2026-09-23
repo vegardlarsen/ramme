@@ -3,7 +3,7 @@
   import { clock, photos, cfg } from '$lib/data.svelte.js';
 
   let { maxHeight = 500 } = $props();
-  const W = 936; // content width: 1080 - 2×72 padding
+  const W = 984; // content width: 1080 - 2×48 padding
 
   // Room decides orientation: tall space favors portrait shots, shallow space
   // landscape ones. Fall back to the whole album if nothing matches.

@@ -13,7 +13,7 @@
 
 <div class="wrap">
   <div class="head">{v.tomorrow ? 'I morgen' : 'I dag'}</div>
-  <div class="card" style="background: {panel}">
+  <div class="card">
     {#if v.ticks.length}
       <div class="row axis">
         <div class="name"></div>
@@ -57,10 +57,10 @@
 </div>
 
 <style>
-  /* full-bleed: cancel the page's 72px side and bottom padding so the band gets
+  /* full-bleed: cancel the page's 48px side and bottom padding so the band gets
      the width and sits on the screen edge (assumes timeline is the last module) */
-  .wrap { flex: 1; display: flex; flex-direction: column; margin: 0 -72px -72px; }
-  .head { padding: 0 72px; font-size: 22px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+  .wrap { flex: 1; display: flex; flex-direction: column; margin: 0 -48px -48px; }
+  .head { padding: 0 48px; font-size: 22px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
           opacity: 0.6; margin-bottom: 14px; }
   .card { position: relative; display: flex; flex-direction: column; gap: 10px;
           padding: 20px 28px 24px; transition: background 2s; }

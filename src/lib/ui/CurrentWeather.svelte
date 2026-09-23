@@ -1,17 +1,10 @@
 <script>
   import { clock, weather } from '$lib/data.svelte.js';
-  import { hourOf } from '$lib/modules.js';
-  import { mode } from '$lib/sky.js';
+  import { currentSub } from '$lib/modules.js';
 
   let { panel } = $props();
   const w = $derived(weather.v);
-  const m = $derived(mode(hourOf(clock.now)));
-  const sub = $derived(
-    !w ? '' :
-    m === 'morning' ? `${w.current.text} · ↑ ${w.sunrise}` :
-    m === 'day' ? `${w.current.text} · ${w.current.precip} mm` :
-    `${w.current.text} · ↓ ${w.sunset}`,
-  );
+  const sub = $derived(w ? currentSub(w, clock.now) : '');
 </script>
 
 {#if w}

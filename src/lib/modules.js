@@ -1,4 +1,5 @@
 import { activeReminder } from './reminders.js';
+import { mode } from './sky.js';
 
 export const hourOf = (d) => d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
 
@@ -117,7 +118,28 @@ function lanes(evs) {
   return sorted;
 }
 
-const rainAhead = (c) => (c.nowcast ?? []).some((p) => p.mm > 0);
+// Subtitle under the current temperature: sunrise in the morning, precipitation
+// by day, sunset in the evening.
+export function currentSub(w, now) {
+  const m = mode(hourOf(now));
+  return m === 'morning' ? `${w.current.text} · ↑ ${w.sunrise}` :
+    m === 'day' ? `${w.current.text} · ${w.current.precip} mm` :
+    `${w.current.text} · ↓ ${w.sunset}`;
+}
+
+export const rainAhead = (c) => (c.nowcast ?? []).some((p) => p.mm > 0);
+
+// Smooth line through midpoints (quadratic beziers), yr-style, in a 100x100
+// viewBox; 2 mm/h floor so drizzle doesn't render as a full-height graph.
+export function nowcastPath(pts) {
+  if (pts.length < 2) return '';
+  const max = Math.max(2, ...pts.map((p) => p.mm));
+  const xy = pts.map((p, i) => [(i / (pts.length - 1)) * 100, 98 - (p.mm / max) * 88]);
+  let d = `M ${xy[0][0]} ${xy[0][1]}`;
+  for (let i = 1; i < xy.length - 1; i++)
+    d += ` Q ${xy[i][0]} ${xy[i][1]} ${(xy[i][0] + xy[i + 1][0]) / 2} ${(xy[i][1] + xy[i + 1][1]) / 2}`;
+  return d + ` L ${xy[xy.length - 1][0]} ${xy[xy.length - 1][1]}`;
+}
 
 // One line the kiosk viewer actually needs: when does the rain stop or start?
 // Points are 5-minute steps starting now; '' = no useful headline.
@@ -133,20 +155,22 @@ export function nowcastHeadline(pts) {
 }
 
 // Timeline's on-screen footprint, mirroring Timeline.svelte's sizes: head 42 +
-// card padding/axis 66 − the 72px it bleeds into the page's bottom padding,
+// card padding/axis 66 − the 48px it bleeds into the page's bottom padding,
 // plus per person a row gap (10) and LANE px per lane, +28 for an all-day chip line.
 // ponytail: assumes chips fit on one line; measure the DOM if they start wrapping
 export const LANE = 58;
-const timelineHeight = (c) => 36 + calendarView(c).items.reduce((sum, p) =>
+const timelineHeight = (c) => 60 + calendarView(c).items.reduce((sum, p) =>
   sum + 10 + LANE * Math.max(1, ...p.timed.map((e) => e.lanes)) + (p.allDay.length ? 28 : 0), 0);
 
 // minHeight: the design's block heights (a function = computed from ctx). priority: what survives when space is
 // tight (higher = kept). flex: fills leftover vertical space when rendered.
 export const REGISTRY = {
-  clock:    { minHeight: 270, priority: 100, flex: false, active: () => true },
+  clock:    { minHeight: 166, priority: 100, flex: false, active: () => true },
   // nowcast swaps in for the weather widget while rain is on the radar
   weather:  { minHeight: 270, priority: 80,  flex: false, active: (c) => !!c.weather && !rainAhead(c) },
   hourly:   { minHeight: 185, priority: 60,  flex: false, active: (c) => !!c.weather },
+  // top-edge strip: nowcast/current conditions + hourly; footprint = 170 − 48 bleed
+  weatherbar: { minHeight: 122, priority: 80, flex: false, active: (c) => !!c.weather },
   nowcast:  { minHeight: 270, priority: 80,  flex: false, active: rainAhead },
   reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
@@ -159,7 +183,7 @@ const GAP = 36;
 // order: config `modules` array (string = own row, array = side-by-side row).
 // Drops the lowest-priority module until everything fits in `avail` px —
 // this is why photos only show when there is room.
-export function layoutModules(order, ctx, avail = 1776) {
+export function layoutModules(order, ctx, avail = 1824) {
   let rows = order
     .map((entry) => [entry].flat()
       .filter((name) => REGISTRY[name])

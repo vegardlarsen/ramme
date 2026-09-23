@@ -9,6 +9,7 @@
   import Photos from '$lib/ui/Photos.svelte';
   import Calendar from '$lib/ui/Calendar.svelte';
   import Timeline from '$lib/ui/Timeline.svelte';
+  import WeatherBar from '$lib/ui/WeatherBar.svelte';
   import { clock, weather, nowcast, calendar, photos, departures, cfg } from '$lib/data.svelte.js';
   import { layoutModules, hourOf } from '$lib/modules.js';
   import { allReminders } from '$lib/reminders.js';
@@ -16,7 +17,7 @@
 
   const COMPONENTS = {
     clock: Clock, weather: CurrentWeather, hourly: HourlyStrip, nowcast: Nowcast,
-    reminder: Reminder, photos: Photos, calendar: Calendar, timeline: Timeline,
+    reminder: Reminder, photos: Photos, calendar: Calendar, timeline: Timeline, weatherbar: WeatherBar,
   };
 
   let vw = $state(1080), vh = $state(1920);
@@ -75,7 +76,7 @@
   .stage { width: 1080px; height: 1920px; flex: none; position: relative; overflow: hidden;
            font-family: 'Outfit', sans-serif; transition: color 2s; transform-origin: center; }
   .sky { position: absolute; inset: 0; transition: background 2s; }
-  .content { position: absolute; inset: 0; padding: 72px; display: flex; flex-direction: column;
+  .content { position: absolute; inset: 0; padding: 48px; display: flex; flex-direction: column;
              gap: 36px; box-sizing: border-box; }
   .mrow { display: flex; gap: 18px; justify-content: space-between; align-items: flex-start; }
   /* Stacked grid cells so alternates (weather/nowcast) crossfade in place
