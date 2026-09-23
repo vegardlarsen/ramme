@@ -8,6 +8,7 @@
   import Reminder from '$lib/ui/Reminder.svelte';
   import Photos from '$lib/ui/Photos.svelte';
   import Calendar from '$lib/ui/Calendar.svelte';
+  import Timeline from '$lib/ui/Timeline.svelte';
   import { clock, weather, nowcast, calendar, photos, departures, cfg } from '$lib/data.svelte.js';
   import { layoutModules, hourOf } from '$lib/modules.js';
   import { allReminders } from '$lib/reminders.js';
@@ -15,7 +16,7 @@
 
   const COMPONENTS = {
     clock: Clock, weather: CurrentWeather, hourly: HourlyStrip, nowcast: Nowcast,
-    reminder: Reminder, photos: Photos, calendar: Calendar,
+    reminder: Reminder, photos: Photos, calendar: Calendar, timeline: Timeline,
   };
 
   let vw = $state(1080), vh = $state(1920);

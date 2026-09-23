@@ -1,5 +1,5 @@
 import { test, expect } from 'vitest';
-import { layoutModules, calendarView, nowcastHeadline, REGISTRY } from '../src/lib/modules.js';
+import { layoutModules, calendarView, timelineView, nowcastHeadline, REGISTRY } from '../src/lib/modules.js';
 
 const monday = (hhmm) => new Date(`2026-08-24T${hhmm}:00`); // Monday, local
 // active Monday ~05:30-08:00 local (Europe/Oslo)
@@ -147,4 +147,23 @@ test('nowcastHeadline: stopping, starting, steady, dry', () => {
   expect(nowcastHeadline(p(1, 1, 1))).toBe('');
   expect(nowcastHeadline(p(0, 0, 0))).toBe('');
   expect(nowcastHeadline([])).toBe('');
+});
+
+test('timelineView: idle stretches over an hour are cut to a break', () => {
+  const cal = { people: [{ name: 'Vegard', events: [
+    { title: 'A', start: '2026-08-24T08:00:00.000Z', end: '2026-08-24T09:00:00.000Z', allDay: false },
+    { title: 'B', start: '2026-08-24T10:00:00.000Z', end: '2026-08-24T10:30:00.000Z', allDay: false }, // 1h gap: kept
+    { title: 'C', start: '2026-08-24T20:00:00.000Z', end: '2026-08-24T20:00:00.000Z', allDay: false }, // zero-length, far away
+  ] }] };
+  const v = timelineView(ctx({ calendar: cal, now: monday('09:00') }));
+  // segments 10–13 and 22–23 local (4h) + one half-hour break
+  expect(v.ticks.map((t) => t.label)).toEqual(['10', '11', '12', '13', '22', '23']);
+  expect(v.breaks).toHaveLength(1);
+  const [a, b, c] = v.items[0].timed;
+  expect(a.left).toBe(0);
+  expect(a.width).toBeCloseTo(1 / 4.5);
+  expect(b.left).toBeCloseTo(2 / 4.5);
+  expect(c.left).toBeCloseTo(3.5 / 4.5);
+  expect(a.room).toBeCloseTo(b.left); // label runs up to B
+  expect(c.room).toBeCloseTo(1 / 4.5);
 });

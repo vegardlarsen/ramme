@@ -48,6 +48,49 @@ export function calendarView(ctx) {
   return { tomorrow, items, hours };
 }
 
+// Horizontal variant: time runs left→right, one row per person. Stretches
+// with no events in any calendar for more than an hour are cut out and drawn
+// as a narrow break, so one late event doesn't stretch the whole axis.
+export function timelineView(ctx) {
+  const v = calendarView(ctx);
+  const timed = v.items.flatMap((p) => p.timed).sort((a, b) => a.ms - b.ms);
+  if (!timed.length) return { ...v, ticks: [], breaks: [] };
+  const HOUR = 3_600_000, CUT = HOUR, BREAK = HOUR / 2;
+  const busy = [];
+  for (const e of timed) {
+    const last = busy.at(-1);
+    if (last && e.ms - last[1] <= CUT) last[1] = Math.max(last[1], e.msEnd);
+    else busy.push([e.ms, e.msEnd]);
+  }
+  // hour-rounded segments; rounding can make neighbours touch, so merge again
+  const segs = [];
+  for (const [a, b] of busy) {
+    const start = Math.floor(a / HOUR) * HOUR, end = Math.ceil(Math.max(b, a + 1) / HOUR) * HOUR;
+    const last = segs.at(-1);
+    if (last && start <= last.end) last.end = end; else segs.push({ start, end });
+  }
+  let off = 0;
+  for (const s of segs) { s.off = off; off += s.end - s.start + BREAK; }
+  const total = off - BREAK;
+  const x = (ms) => {
+    const s = segs.find((s) => ms <= s.end);
+    return (s.off + ms - s.start) / total;
+  };
+  for (const e of timed) { e.left = x(e.ms); e.width = x(e.msEnd) - e.left; }
+  // labels may run past a short block, up to the person's next event
+  for (const p of v.items) for (const e of p.timed)
+    e.room = (p.timed.find((o) => o.ms >= e.msEnd && o !== e)?.left ?? 1) - e.left;
+  const step = total / HOUR > 10 ? 2 : 1;
+  const ticks = segs.flatMap((s) => {
+    const out = [];
+    for (let t = s.start; t <= s.end; t += step * HOUR)
+      out.push({ label: String(new Date(t).getHours()).padStart(2, '0'), frac: x(t) });
+    return out;
+  });
+  const breaks = segs.slice(1).map((s) => ({ left: (s.off - BREAK) / total, width: BREAK / total }));
+  return { ...v, ticks, breaks };
+}
+
 // Side-by-side lanes for a person's own overlapping events: greedy lane
 // assignment; every event in a connected overlap cluster shares its lane count.
 function lanes(evs) {
@@ -100,6 +143,7 @@ export const REGISTRY = {
   reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
   calendar: { minHeight: 460, priority: 70,  flex: true,  active: (c) => calendarView(c).items.length > 0 },
+  timeline: { minHeight: 300, priority: 70,  flex: false, active: (c) => calendarView(c).items.length > 0 },
 };
 
 const GAP = 36;
