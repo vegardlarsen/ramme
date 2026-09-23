@@ -132,7 +132,15 @@ export function nowcastHeadline(pts) {
   return start > 0 ? `regn om ca. ${start * 5} min` : '';
 }
 
-// minHeight: the design's block heights. priority: what survives when space is
+// Timeline's on-screen footprint, mirroring Timeline.svelte's sizes: head 42 +
+// card padding/axis 66 − the 72px it bleeds into the page's bottom padding,
+// plus per person a row gap (10) and LANE px per lane, +28 for an all-day chip line.
+// ponytail: assumes chips fit on one line; measure the DOM if they start wrapping
+export const LANE = 58;
+const timelineHeight = (c) => 36 + calendarView(c).items.reduce((sum, p) =>
+  sum + 10 + LANE * Math.max(1, ...p.timed.map((e) => e.lanes)) + (p.allDay.length ? 28 : 0), 0);
+
+// minHeight: the design's block heights (a function = computed from ctx). priority: what survives when space is
 // tight (higher = kept). flex: fills leftover vertical space when rendered.
 export const REGISTRY = {
   clock:    { minHeight: 270, priority: 100, flex: false, active: () => true },
@@ -143,7 +151,7 @@ export const REGISTRY = {
   reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
   calendar: { minHeight: 460, priority: 70,  flex: true,  active: (c) => calendarView(c).items.length > 0 },
-  timeline: { minHeight: 300, priority: 70,  flex: false, active: (c) => calendarView(c).items.length > 0 },
+  timeline: { minHeight: timelineHeight, priority: 70,  flex: false, active: (c) => calendarView(c).items.length > 0 },
 };
 
 const GAP = 36;
@@ -156,6 +164,7 @@ export function layoutModules(order, ctx, avail = 1776) {
     .map((entry) => [entry].flat()
       .filter((name) => REGISTRY[name])
       .map((name) => ({ name, ...REGISTRY[name] }))
+      .map((m) => typeof m.minHeight === 'function' ? { ...m, minHeight: m.minHeight(ctx) } : m)
       .filter((m) => m.active(ctx)))
     .filter((r) => r.length);
   const height = (r) => Math.max(...r.map((m) => m.minHeight));

@@ -1,6 +1,6 @@
 <script>
   import { clock, calendar } from '$lib/data.svelte.js';
-  import { timelineView } from '$lib/modules.js';
+  import { timelineView, LANE } from '$lib/modules.js';
 
   let { panel } = $props();
   const v = $derived(timelineView({ calendar: calendar.v, now: clock.now }));
@@ -36,7 +36,7 @@
         {#if p.allDay.length}
           <div class="chips">{#each p.allDay as e}<span class="chip">{e.title}{tag(e)}</span>{/each}</div>
         {/if}
-        <div class="track" style="height: {lanes(p) * 58}px">
+        <div class="track" style="height: {lanes(p) * LANE}px">
           {#each p.timed as e}
             <div class="ev" class:done={e.done} class:now={e.now}
                  style="left: {pct(e.left)}; width: {pct(e.width)};
