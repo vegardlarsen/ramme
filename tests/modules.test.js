@@ -70,15 +70,33 @@ test('calendarView: one card per person with today\'s remaining events', () => {
   expect(v.items[0].events.map((e) => e.title)).toEqual(['Statusmøte']); // Bursdag is tomorrow
 });
 
+const withLunch = { people: [{ ...calendar.people[0], events: [
+  ...calendar.people[0].events,
+  { title: 'Lunsj', start: '2026-08-24T10:00:00.000Z', end: '2026-08-24T11:00:00.000Z', label: 'jobb', allDay: false },
+] }] };
+
 test('calendarView: the day stays static — finished events remain, marked done', () => {
-  const v = calendarView(ctx({ now: monday('11:00') })); // Statusmøte ended 10:00 local
-  expect(v.items[0].timed.map((e) => [e.title, e.done, e.now])).toEqual([['Statusmøte', true, false]]);
+  // Statusmøte ended 10:00 local; Lunsj (12–13 local) keeps today on screen
+  const v = calendarView(ctx({ calendar: withLunch, now: monday('11:00') }));
+  expect(v.tomorrow).toBe(false);
+  expect(v.items[0].timed.map((e) => [e.title, e.done, e.now]))
+    .toEqual([['Statusmøte', true, false], ['Lunsj', false, false]]);
 });
 
-test('calendarView: from 20:00 the cards show tomorrow', () => {
-  const v = calendarView(ctx({ now: monday('21:00') }));
+test('calendarView: switches to tomorrow once today\'s last event has ended', () => {
+  expect(calendarView(ctx({ calendar: withLunch, now: monday('12:59') })).tomorrow).toBe(false);
+  const v = calendarView(ctx({ calendar: withLunch, now: monday('13:00') }));
   expect(v.tomorrow).toBe(true);
   expect(v.items[0].events.map((e) => e.title)).toEqual(['Bursdag']);
+});
+
+test('calendarView: a day without timed events switches at 20:00', () => {
+  const allDay = { people: [{ ...calendar.people[0], events: [
+    { title: 'Fri', start: '2026-08-23T22:00:00.000Z', end: '2026-08-24T22:00:00.000Z', allDay: true },
+    calendar.people[0].events[1],
+  ] }] };
+  expect(calendarView(ctx({ calendar: allDay, now: monday('19:59') })).tomorrow).toBe(false);
+  expect(calendarView(ctx({ calendar: allDay, now: monday('20:00') })).tomorrow).toBe(true);
 });
 
 test('calendarView: shared hour-rounded timeline with overlap lanes', () => {

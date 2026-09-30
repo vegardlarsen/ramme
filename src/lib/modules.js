@@ -4,14 +4,19 @@ import { mode } from './sky.js';
 export const hourOf = (d) => d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
 
 // One column per person: a static view of the whole day (finished events stay,
-// marked `done`; ongoing ones marked `now`); from 20:00 the view switches to
-// tomorrow's agenda (`tomorrow: true`). Empty items = nothing to show = the
+// marked `done`; ongoing ones marked `now`); once today's last timed event has
+// ended the view switches to tomorrow's agenda (`tomorrow: true`). A day with no
+// timed events (empty, or all-day only) switches at 20:00 as before. Empty items = nothing to show = the
 // module hides itself.
 export function calendarView(ctx) {
   const now = ctx.now;
   const people = ctx.calendar?.people ?? [];
-  const tomorrow = now.getHours() >= 20;
   const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+  const todayTimed = people.flatMap((p) => p.events).filter((e) =>
+    !e.allDay && new Date(e.start).toDateString() === now.toDateString());
+  const tomorrow = todayTimed.length
+    ? todayTimed.every((e) => +new Date(e.end) <= +now)
+    : now.getHours() >= 20;
   if (tomorrow) dayStart.setDate(dayStart.getDate() + 1);
   const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
   const items = people.map((p) => {
