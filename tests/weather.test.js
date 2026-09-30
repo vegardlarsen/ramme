@@ -1,11 +1,12 @@
 import { test, expect } from 'vitest';
 import { readdirSync } from 'node:fs';
-import { normalizeWeather, normalizeNowcast, fetchNowcast } from '../src/lib/server/weather.js';
+import { normalizeWeather, normalizeNowcast, fetchNowcast, windOf } from '../src/lib/server/weather.js';
 
 const entry = (time, temp, cloud, symbol, precip = 0) => ({
   time,
   data: {
-    instant: { details: { air_temperature: temp, cloud_area_fraction: cloud } },
+    instant: { details: { air_temperature: temp, cloud_area_fraction: cloud,
+                          wind_speed: 3.6, wind_from_direction: 92.4 } },
     next_1_hours: { summary: { symbol_code: symbol }, details: { precipitation_amount: precip } },
   },
 });
@@ -38,6 +39,15 @@ test('normalizeWeather produces the screen model', () => {
   expect(w.hourly[0].temp).toBe(17);
   expect(w.sunrise).toMatch(/^\d\d:\d\d$/);
   expect(w.tomorrow.temp).toBe(17);
+  expect(w.hourly[0].wind).toEqual({ speed: 4, from: 92, gust: null });
+  expect(w.current.wind).toEqual({ speed: 4, from: 92, gust: null });
+  expect(w.tomorrow.wind).toEqual({ speed: 4, from: 92, gust: null });
+});
+
+test('tomorrow shows the day\'s high, not the noon temperature', () => {
+  const ts = forecast.properties.timeseries.map((t) =>
+    t.time === '2026-08-25T14:00:00.000Z' ? entry(t.time, 23.4, 10, 'clearsky_day') : t);
+  expect(normalizeWeather({ properties: { timeseries: ts } }, sun).tomorrow.temp).toBe(23);
 });
 
 test('rain boosts cloud for sky desaturation', () => {
@@ -67,4 +77,20 @@ test('fetchNowcast: 422 means no data, transient errors throw (cache serves stal
     globalThis.fetch = async () => ({ ok: false, status: 503 });
     await expect(fetchNowcast(60, 5)).rejects.toThrow('503');
   } finally { globalThis.fetch = orig; }
+});
+
+test('windOf shows gusts only when more than 20% above the mean wind', () => {
+  const at = (speed, gust) => windOf({ data: { instant: { details:
+    { wind_speed: speed, wind_speed_of_gust: gust, wind_from_direction: 180 } } } });
+  expect(at(4.2, 6.4).gust).toBe(6);
+  expect(at(5, 6).gust).toBe(null);    // exactly 20%: not shown
+  expect(at(3.6, 4.4).gust).toBe(null); // >20%, but both round to 4 m/s
+  expect(at(4, undefined).gust).toBe(null); // beyond MET's gust horizon
+});
+
+test('windOf hides negligible wind (below 3.4 m/s, Beaufort "svak vind")', () => {
+  const at = (speed) => windOf({ data: { instant: { details: { wind_speed: speed, wind_from_direction: 90 } } } });
+  expect(at(3.3)).toBe(null);
+  expect(at(undefined)).toBe(null);
+  expect(at(3.4)).toEqual({ speed: 3, from: 90, gust: null });
 });

@@ -14,6 +14,20 @@ const hhmm = (iso) =>
 const symbolOf = (t) =>
   t.data.next_1_hours?.summary.symbol_code ?? t.data.next_6_hours?.summary.symbol_code ?? 'cloudy';
 
+// direction is where the wind comes FROM, in degrees (0 = north), as MET reports it.
+// Gusts only when >20% above the mean wind (and still higher once rounded); MET
+// gives gusts for the first ~2.5 days only, null beyond that. Below 3.4 m/s
+// (Beaufort "flau vind"/"svak vind") the wind is negligible: null, and the UI hides it.
+export const windOf = (t) => {
+  const d = t.data.instant.details;
+  if (!((d.wind_speed ?? 0) >= 3.4)) return null;
+  const speed = Math.round(d.wind_speed ?? 0), g = d.wind_speed_of_gust;
+  return {
+    speed, from: Math.round(d.wind_from_direction ?? 0),
+    gust: g > (d.wind_speed ?? 0) * 1.2 && Math.round(g) > speed ? Math.round(g) : null,
+  };
+};
+
 export function normalizeWeather(forecast, sun) {
   const ts = forecast.properties.timeseries;
   const now = ts[0];
@@ -29,6 +43,7 @@ export function normalizeWeather(forecast, sun) {
       hour: String(new Date(t.time).getHours()).padStart(2, '0'),
       temp: Math.round(t.data.instant.details.air_temperature),
       symbol: symbolOf(t),
+      wind: windOf(t),
     };
   });
 
@@ -42,17 +57,20 @@ export function normalizeWeather(forecast, sun) {
     ? tomorrowEntries.reduce((best, t) =>
         Math.abs(new Date(t.time).getHours() - 12) < Math.abs(new Date(best.time).getHours() - 12) ? t : best)
     : ts[ts.length - 1];
+  const tmSymbol = tm.data.next_6_hours?.summary.symbol_code ?? symbolOf(tm);
   return {
     current: {
       temp: Math.round(now.data.instant.details.air_temperature),
-      symbol, text: textFor(symbol), precip, cloud,
+      symbol, text: textFor(symbol), precip, cloud, wind: windOf(now),
     },
     hourly,
     sunrise: hhmm(sun.properties.sunrise.time),
     sunset: hhmm(sun.properties.sunset.time),
+    // the day's high, with the noon entry's afternoon symbol and wind
     tomorrow: {
-      temp: Math.round(tm.data.instant.details.air_temperature),
-      symbol: symbolOf(tm), text: textFor(symbolOf(tm)),
+      temp: Math.round(Math.max(...(tomorrowEntries.length ? tomorrowEntries : [tm])
+        .map((t) => t.data.instant.details.air_temperature))),
+      symbol: tmSymbol, text: textFor(tmSymbol), wind: windOf(tm),
     },
     updatedAt: new Date().toISOString(),
   };
@@ -81,7 +99,7 @@ export async function fetchWeather(lat, lon) {
   };
   const date = new Date().toISOString().slice(0, 10);
   const [forecast, sun] = await Promise.all([
-    get(`https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`),
+    get(`https://api.met.no/weatherapi/locationforecast/2.0/complete?lat=${lat}&lon=${lon}`),
     get(`https://api.met.no/weatherapi/sunrise/3.0/sun?lat=${lat}&lon=${lon}&date=${date}`),
   ]);
   return normalizeWeather(forecast, sun);

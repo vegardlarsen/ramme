@@ -9,6 +9,11 @@
   const line = $derived(nowcastPath(pts));
 </script>
 
+{#snippet wind(v)}
+  <!-- absent in weather cached before wind was added -->
+  {#if v}<div class="sub"><span class="arrow" style="rotate: {v.from}deg">↓</span> {v.speed}{v.gust ? ` (${v.gust})` : ''} m/s</div>{/if}
+{/snippet}
+
 {#if w}
   <div class="bar">
     {#if rain}
@@ -33,6 +38,7 @@
         <div>
           <div class="temp big">{w.current.temp}°</div>
           <div class="sub">{currentSub(w, clock.now)}</div>
+          {@render wind(w.current.wind)}
         </div>
       </div>
     {/if}
@@ -42,8 +48,17 @@
           <span class="t">{h.hour}</span>
           <img src="/weather/{h.symbol}.svg" alt="" width="56" height="56" />
           <span class="htemp">{h.temp}°</span>
+          {#if h.wind}<span class="hwind"><span class="arrow" style="rotate: {h.wind.from}deg">↓</span> {h.wind.speed} m/s</span>{/if}
         </div>
       {/each}
+    </div>
+    <div class="now tomorrow">
+      <img src="/weather/{w.tomorrow.symbol}.svg" alt="" width="84" height="84" />
+      <div>
+        <div class="temp big">{w.tomorrow.temp}°</div>
+        <div class="sub">i morgen</div>
+        {@render wind(w.tomorrow.wind)}
+      </div>
     </div>
   </div>
 {/if}
@@ -51,11 +66,15 @@
 <style>
   /* full-bleed: cancel the page's 48px side and top padding so the bar sits on
      the top edge (assumes weatherbar is the first module) */
-  .bar { flex: 1; margin: -48px -48px 0; height: 170px; box-sizing: border-box;
+  .bar { flex: 1; margin: -48px -48px 0; height: 196px; box-sizing: border-box;
          padding: 22px 28px; display: flex; align-items: center; gap: 28px;
          transition: background 2s; }
   .now { flex: none; display: flex; align-items: center; gap: 12px;
          padding-right: 28px; border-right: 1.5px solid color-mix(in srgb, currentColor 15%, transparent); }
+  .now.tomorrow { padding: 0 0 0 28px; border-right: 0;
+                  border-left: 1.5px solid color-mix(in srgb, currentColor 15%, transparent); }
+  /* ↓ at 0° = wind from the north, blowing south */
+  .arrow { display: inline-block; }
   .now.rain { width: 320px; height: 100%; flex-direction: column; align-items: stretch; gap: 6px; }
   .head { display: flex; align-items: center; gap: 8px; }
   .temp { font-size: 36px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -70,4 +89,5 @@
   .item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .t { font-size: 21px; opacity: 0.6; }
   .htemp { font-size: 25px; font-weight: 600; }
+  .hwind { font-size: 18px; opacity: 0.6; white-space: nowrap; }
 </style>

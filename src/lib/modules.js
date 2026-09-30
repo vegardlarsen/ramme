@@ -162,6 +162,16 @@ export const LANE = 58;
 const timelineHeight = (c) => 60 + calendarView(c).items.reduce((sum, p) =>
   sum + 10 + LANE * Math.max(1, ...p.timed.map((e) => e.lanes)) + (p.allDay.length ? 28 : 0), 0);
 
+// Reminder card's footprint, mirroring Reminder.svelte's sizes: padding 128 +
+// label 30 + 115 per title line, + 14 + 38 per subtitle line.
+// ponytail: wraps estimated from character counts (~20/line title, ~60 subtitle); measure the DOM if cards start clipping
+const reminderHeight = (c) => {
+  const r = activeReminder(c.reminders ?? [], c.now);
+  if (!r) return 0;
+  const lines = (s, per) => Math.ceil(s.length / per);
+  return 172 + 101 * lines(r.title, 20) + (r.subtitle ? 14 + 38 * lines(r.subtitle, 60) : 0);
+};
+
 // minHeight: the design's block heights (a function = computed from ctx). priority: what survives when space is
 // tight (higher = kept). flex: fills leftover vertical space when rendered.
 export const REGISTRY = {
@@ -169,10 +179,10 @@ export const REGISTRY = {
   // nowcast swaps in for the weather widget while rain is on the radar
   weather:  { minHeight: 270, priority: 80,  flex: false, active: (c) => !!c.weather && !rainAhead(c) },
   hourly:   { minHeight: 185, priority: 60,  flex: false, active: (c) => !!c.weather },
-  // top-edge strip: nowcast/current conditions + hourly; footprint = 170 − 48 bleed
-  weatherbar: { minHeight: 122, priority: 80, flex: false, active: (c) => !!c.weather },
+  // top-edge strip: nowcast/current conditions + hourly; footprint = 196 − 48 bleed
+  weatherbar: { minHeight: 148, priority: 80, flex: false, active: (c) => !!c.weather },
   nowcast:  { minHeight: 270, priority: 80,  flex: false, active: rainAhead },
-  reminder: { minHeight: 460, priority: 90,  flex: true,  active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
+  reminder: { minHeight: reminderHeight, priority: 90,  flex: false, active: (c) => !!activeReminder(c.reminders ?? [], c.now) },
   photos:   { minHeight: 500, priority: 10,  flex: true,  active: (c) => (c.photos ?? []).length > 0 },
   calendar: { minHeight: 460, priority: 70,  flex: true,  active: (c) => calendarView(c).items.length > 0 },
   timeline: { minHeight: timelineHeight, priority: 70,  flex: false, active: (c) => calendarView(c).items.length > 0 },

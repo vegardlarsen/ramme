@@ -55,11 +55,12 @@ test('flex modules learn how much room they actually have', () => {
   expect(cal.maxHeight).toBe(Math.round(460 + 301 / 2));
 });
 
-test('calendar stretches when only a reminder competes for space', () => {
+test('calendar takes all the slack next to a content-sized reminder', () => {
   const rows = layoutModules(ORDER, ctx({ photos: [] }));
   const cal = rows.flat().find((m) => m.name === 'calendar');
-  // slack 1824 - (270 + 185 + 460 + 460 + 3*36) = 341, split with the reminder
-  expect(cal.maxHeight).toBe(Math.round(460 + 341 / 2));
+  // reminder card: 172 + one 101px title line = 273, no subtitle
+  // slack 1824 - (270 + 185 + 273 + 460 + 3*36) = 528, all to the calendar
+  expect(cal.maxHeight).toBe(460 + 528);
 });
 
 test('calendarView: one card per person with today\'s remaining events', () => {
@@ -134,9 +135,9 @@ test('unknown module names in the order are ignored', () => {
 });
 
 test('a side-by-side module that frees no space is not dropped', () => {
-  // 270 + 36 + 460 > 700: weather (80) goes before reminder (90); hourly
+  // 270 + 36 + 273 > 500: weather (80) goes before reminder (90); hourly
   // (60) is lower still, but removing it saves 0px next to the taller weather
-  const rows = layoutModules([['weather', 'hourly'], 'reminder'], ctx(), 700);
+  const rows = layoutModules([['weather', 'hourly'], 'reminder'], ctx(), 500);
   expect(names(rows)).toEqual([['hourly'], ['reminder']]);
 });
 
