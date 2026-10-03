@@ -26,8 +26,8 @@ export function calendarView(ctx) {
              color: /^#[0-9a-f]{6}$/i.test(p.color ?? '') ? p.color : undefined, events,
              allDay: events.filter((e) => e.allDay),
              timed: lanes(events.filter((e) => !e.allDay)) };
-  });
-  if (!items.some((p) => p.events.length)) return { tomorrow, items: [], hours: [] };
+  }).filter((p) => p.events.length); // people with nothing that day get no row
+  if (!items.length) return { tomorrow, items: [], hours: [] };
   // Shared timeline: hour-rounded span of everyone's timed events, clamped to
   // 07–23, min 3h so a lone short event doesn't fill the whole card.
   // ponytail: hour-rounding epoch ms assumes a whole-hour UTC offset (true for Oslo)

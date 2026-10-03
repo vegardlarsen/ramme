@@ -75,6 +75,11 @@ const withLunch = { people: [{ ...calendar.people[0], events: [
   { title: 'Lunsj', start: '2026-08-24T10:00:00.000Z', end: '2026-08-24T11:00:00.000Z', label: 'jobb', allDay: false },
 ] }] };
 
+test('calendarView: people with no events that day are left out', () => {
+  const cal = { people: [{ name: 'Tom', events: [] }, ...calendar.people] };
+  expect(calendarView(ctx({ calendar: cal })).items.map((p) => p.name)).toEqual(['Vegard']);
+});
+
 test('calendarView: the day stays static — finished events remain, marked done', () => {
   // Statusmøte ended 10:00 local; Lunsj (12–13 local) keeps today on screen
   const v = calendarView(ctx({ calendar: withLunch, now: monday('11:00') }));
