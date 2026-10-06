@@ -1,17 +1,22 @@
 import ical from 'node-ical';
 
-// ponytail: EXDATE honored; per-instance RECURRENCE-ID overrides are ignored.
-// Add handling of ev.recurrences if moved single instances start showing wrong.
+const overlaps = (ev, winStart, winEnd) => ev.start < winEnd && ev.end > winStart;
+
+// Returns the VEVENTs (series instance or its RECURRENCE-ID override) that
+// fall in the window, each with its own start/end.
 function expand(ev, winStart, winEnd) {
+  if (!ev.rrule) return overlaps(ev, winStart, winEnd) ? [ev] : [];
   const dur = ev.end - ev.start;
-  if (!ev.rrule) {
-    return ev.start < winEnd && ev.end > winStart ? [{ start: ev.start, end: ev.end }] : [];
-  }
+  // node-ical keys each override twice (date + ISO), so dedupe by recurrenceid
+  const moved = new Map(Object.values(ev.recurrences ?? {}).map((r) => [+r.recurrenceid, r]));
   const ex = new Set(Object.values(ev.exdate ?? {}).map((d) => +new Date(d)));
-  return ev.rrule
+  const series = ev.rrule
     .between(new Date(+winStart - dur), winEnd, true)
-    .filter((d) => !ex.has(+d))
-    .map((d) => ({ start: d, end: new Date(+d + dur) }));
+    .filter((d) => !ex.has(+d) && !moved.has(+d))
+    .map((d) => ({ ...ev, start: d, end: new Date(+d + dur) }));
+  const overrides = [...moved.values()]
+    .filter((r) => r.status !== 'CANCELLED' && overlaps(r, winStart, winEnd));
+  return [...series, ...overrides];
 }
 
 // "!remind", "!remind 3", "!remind 90 min", "!remind 2 days" on its own line
@@ -39,14 +44,15 @@ export function eventsFromICS(text, label, winStart, winEnd) {
   const out = [];
   for (const ev of Object.values(parsed)) {
     if (ev.type !== 'VEVENT') continue;
-    const remind = parseRemind(ev.description ?? '');
-    for (const { start, end } of expand(ev, winStart, winEnd)) {
+    for (const inst of expand(ev, winStart, winEnd)) {
+      const { start, end } = inst;
+      const remind = parseRemind(inst.description ?? '');
       out.push({
-        title: ev.summary ?? '(uten tittel)',
+        title: inst.summary ?? '(uten tittel)',
         start: start.toISOString(),
         end: end.toISOString(),
         label,
-        allDay: ev.datetype === 'date',
+        allDay: inst.datetype === 'date',
         ...(remind && {
           subtitle: remind.subtitle,
           remind: {

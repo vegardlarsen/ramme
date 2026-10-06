@@ -86,3 +86,27 @@ test('parseRemind grammar', () => {
   expect(parseRemind('!remind 1 day\n').subtitle).toBeNull();
   expect(parseRemind('en vennlig påminnelse om møtet')).toBeNull();
 });
+
+test('RECURRENCE-ID override moves a single instance', () => {
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:moved@test
+DTSTART:20260810T120000Z
+DTEND:20260810T124500Z
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:Check-in
+END:VEVENT
+BEGIN:VEVENT
+UID:moved@test
+RECURRENCE-ID:20260824T120000Z
+DTSTART:20260824T080000Z
+DTEND:20260824T084500Z
+SUMMARY:Check-in (flyttet)
+END:VEVENT
+END:VCALENDAR`;
+  const evs = eventsFromICS(ics, 'jobb', ...win);
+  expect(evs.map((e) => [e.title, e.start])).toEqual([
+    ['Check-in (flyttet)', '2026-08-24T08:00:00.000Z'],
+  ]);
+});
