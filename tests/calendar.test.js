@@ -110,3 +110,27 @@ END:VCALENDAR`;
     ['Check-in (flyttet)', '2026-08-24T08:00:00.000Z'],
   ]);
 });
+
+test('events the person declined are hidden; others declining does not matter', () => {
+  const ics = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+UID:no@test
+DTSTART:20260824T090000Z
+DTEND:20260824T100000Z
+SUMMARY:Avslått
+ATTENDEE;PARTSTAT=ACCEPTED;CN=boss@x.no:mailto:boss@x.no
+ATTENDEE;PARTSTAT=DECLINED;CN=me@x.no:mailto:Me@x.no
+END:VEVENT
+BEGIN:VEVENT
+UID:yes@test
+DTSTART:20260824T110000Z
+DTEND:20260824T120000Z
+SUMMARY:Godtatt
+ATTENDEE;PARTSTAT=DECLINED;CN=boss@x.no:mailto:boss@x.no
+ATTENDEE;PARTSTAT=ACCEPTED;CN=me@x.no:mailto:me@x.no
+END:VEVENT
+END:VCALENDAR`;
+  expect(eventsFromICS(ics, 'jobb', ...win, ['me@x.no']).map((e) => e.title)).toEqual(['Godtatt']);
+  expect(eventsFromICS(ics, 'jobb', ...win).length).toBe(2);
+});

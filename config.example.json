@@ -16,6 +16,7 @@
     {
       "name": "Vegard",
       "color": "#C4572E",
+      "emails": ["vegard@example.com"],
       "feeds": [
         {
           "url": "https://example.com/work.ics",

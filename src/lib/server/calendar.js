@@ -39,12 +39,18 @@ export function parseRemind(description = '') {
   return { leadMs, tailMs, subtitle };
 }
 
-export function eventsFromICS(text, label, winStart, winEnd) {
+// True when one of the person's own addresses (config `emails`) declined it.
+const declined = (ev, me) => [ev.attendee ?? []].flat().some((a) =>
+  a.params?.PARTSTAT === 'DECLINED' && me.has(String(a.val).replace(/^mailto:/i, '').toLowerCase()));
+
+export function eventsFromICS(text, label, winStart, winEnd, emails = []) {
   const parsed = ical.sync.parseICS(text);
+  const me = new Set(emails.map((e) => e.toLowerCase()));
   const out = [];
   for (const ev of Object.values(parsed)) {
     if (ev.type !== 'VEVENT') continue;
     for (const inst of expand(ev, winStart, winEnd)) {
+      if (declined(inst, me)) continue;
       const { start, end } = inst;
       const remind = parseRemind(inst.description ?? '');
       out.push({
@@ -76,7 +82,7 @@ export async function fetchCalendars(people) {
         try {
           const res = await fetch(f.url);
           if (!res.ok) throw new Error(`${f.url} -> ${res.status}`);
-          return eventsFromICS(await res.text(), f.label, winStart, winEnd);
+          return eventsFromICS(await res.text(), f.label, winStart, winEnd, p.emails);
         } catch (e) {
           console.error('calendar feed failed:', f.url, e.message);
           return []; // one broken feed must not hide the person's other feeds
