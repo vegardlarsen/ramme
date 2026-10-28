@@ -6,6 +6,7 @@
   const v = $derived(timelineView({ calendar: calendar.v, now: clock.now }));
   const hhmm = (iso) => new Date(iso).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
   const tag = (e) => e.label && e.label !== 'privat' ? ` · ${e.label}` : '';
+  const until = (e) => e.until ? ` → ${e.until.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}` : '';
   const pct = (f) => `${f * 100}%`;
   const initials = (name) => name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
   const lanes = (p) => Math.max(1, ...p.timed.map((e) => e.lanes));
@@ -34,7 +35,7 @@
                     border-color: {p.color ?? 'currentColor'}">{initials(p.name)}</div>
         <div class="body">
         {#if p.allDay.length}
-          <div class="chips">{#each p.allDay as e}<span class="chip">{e.title}{tag(e)}</span>{/each}</div>
+          <div class="chips">{#each p.allDay as e}<span class="chip">{e.title}{tag(e)}{until(e)}</span>{/each}</div>
         {/if}
         <div class="track" style="height: {lanes(p) * LANE}px">
           {#each p.timed as e}

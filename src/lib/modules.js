@@ -8,24 +8,39 @@ export const hourOf = (d) => d.getHours() + d.getMinutes() / 60 + d.getSeconds()
 // ended the view switches to tomorrow's agenda (`tomorrow: true`). A day with no
 // timed events (empty, or all-day only) switches at 20:00 as before. Empty items = nothing to show = the
 // module hides itself.
+// A timed event covering the whole day (a leave entered as 00:00 → 00:00 a month
+// later) counts as all-day too. All-day events show on every day they overlap;
+// multi-day ones carry `until` (their last day).
+function dayEvents(events, dayStart) {
+  const d0 = +dayStart, d1 = +new Date(dayStart).setDate(dayStart.getDate() + 1);
+  const seen = new Set(); // the same event from two feeds shows once
+  const allDay = [], timed = [];
+  for (const e of events) {
+    const k = `${e.title}|${e.start}|${e.end}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const s = +new Date(e.start), end = +new Date(e.end);
+    if (e.allDay ? s < d1 && end > d0 : s <= d0 && end >= d1)
+      allDay.push({ ...e, allDay: true, until: end > d1 ? new Date(end - 1) : null });
+    else if (!e.allDay && s >= d0 && s < d1) timed.push(e);
+  }
+  return { allDay, timed };
+}
+
 export function calendarView(ctx) {
   const now = ctx.now;
   const people = ctx.calendar?.people ?? [];
   const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
-  const todayTimed = people.flatMap((p) => p.events).filter((e) =>
-    !e.allDay && new Date(e.start).toDateString() === now.toDateString());
+  const todayTimed = dayEvents(people.flatMap((p) => p.events), dayStart).timed;
   const tomorrow = todayTimed.length
     ? todayTimed.every((e) => +new Date(e.end) <= +now)
     : now.getHours() >= 20;
   if (tomorrow) dayStart.setDate(dayStart.getDate() + 1);
-  const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
   const items = people.map((p) => {
-    const events = p.events.filter((e) =>
-      new Date(e.start) >= dayStart && new Date(e.start) < dayEnd);
+    const { allDay, timed } = dayEvents(p.events, dayStart);
     return { name: p.name,
-             color: /^#[0-9a-f]{6}$/i.test(p.color ?? '') ? p.color : undefined, events,
-             allDay: events.filter((e) => e.allDay),
-             timed: lanes(events.filter((e) => !e.allDay)) };
+             color: /^#[0-9a-f]{6}$/i.test(p.color ?? '') ? p.color : undefined,
+             events: [...allDay, ...timed], allDay, timed: lanes(timed) };
   }).filter((p) => p.events.length); // people with nothing that day get no row
   if (!items.length) return { tomorrow, items: [], hours: [] };
   // Shared timeline: hour-rounded span of everyone's timed events, clamped to

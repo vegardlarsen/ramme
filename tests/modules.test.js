@@ -191,3 +191,18 @@ test('timelineView: idle stretches over an hour are cut to a break', () => {
   expect(a.room).toBeCloseTo(b.left); // label runs up to B
   expect(c.room).toBeCloseTo(1 / 4.5);
 });
+test('midnight-to-midnight leave is a deduped all-day chip on every day it covers', () => {
+  const leave = { title: 'Ikke på jobb', start: new Date(2026, 9, 28).toISOString(),
+                  end: new Date(2026, 10, 30).toISOString(), allDay: false };
+  const meet = { title: 'Møte', start: new Date(2026, 10, 2, 10).toISOString(),
+                 end: new Date(2026, 10, 2, 11).toISOString(), allDay: false };
+  const calendar = { people: [{ name: 'V', events: [leave, { ...leave }, meet] }] };
+  const v = calendarView({ calendar, now: new Date(2026, 10, 2, 9) });
+  const [p] = v.items;
+  expect(v.tomorrow).toBe(false);
+  expect(p.allDay.map((e) => e.title)).toEqual(['Ikke på jobb']);
+  expect(p.allDay[0].until.getDate()).toBe(29);
+  expect(p.timed.map((e) => e.title)).toEqual(['Møte']);
+  expect(v.hours[0].label).toBe('08'); // 3h minimum around the meeting, not the leave's 07–23
+  expect(v.hours.at(-1).label).toBe('11');
+});

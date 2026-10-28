@@ -6,6 +6,7 @@
   const v = $derived(calendarView({ calendar: calendar.v, now: clock.now }));
   const hhmm = (iso) => new Date(iso).toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
   const tag = (e) => e.label && e.label !== 'privat' ? ` · ${e.label}` : '';
+  const until = (e) => e.until ? ` → ${e.until.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}` : '';
   const pct = (f) => `${f * 100}%`;
 </script>
 
@@ -17,7 +18,7 @@
       {#each v.items as p (p.name)}
         <div class="name">
           {p.name}
-          {#each p.allDay as e}<span class="chip">{e.title}{tag(e)}</span>{/each}
+          {#each p.allDay as e}<span class="chip">{e.title}{tag(e)}{until(e)}</span>{/each}
         </div>
       {/each}
     </div>
